@@ -5,13 +5,11 @@ using UnityEngine;
 using UnityEngine.Audio;
 
 
-// Как раз тут можно запилить названием всех уровней
+
 [CreateAssetMenu]
 public class QualitySetting : Setting<int>
 {
     [SerializeField] private int defaultLevel;
-
-    public List<string> Titles; // Временно
 
     public override int CurrentValue { get => currentValue; }
 
@@ -24,8 +22,7 @@ public class QualitySetting : Setting<int>
 
     public override void Apply()
     {
-        QualitySettings.SetQualityLevel(currentValue);
-
+        QualitySettings.SetQualityLevel(currentValue);      
     }
 
     public override void Load()
@@ -37,7 +34,6 @@ public class QualitySetting : Setting<int>
     {
         PlayerPrefs.SetInt(key, currentValue);
     }
-
-   
+  
 }
 

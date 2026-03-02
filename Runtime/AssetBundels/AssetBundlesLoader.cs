@@ -11,15 +11,15 @@ public static class AssetBundlesLoader
     {
         if(remote == true)
         {
-            if (Application.isEditor == true) return AssetBundlesConfigs.AssetBundleRemoteURLStandaloneWindows;
-            if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.AssetBundleRemoteURLWebGL;
+            if (Application.isEditor == true) return AssetBundlesConfigs.Instance.AssetBundleRemoteURLStandaloneWindows;
+            if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.Instance.AssetBundleRemoteURLWebGL;
             
         }
 
         if (remote == false)
         {
-            if (Application.isEditor == true) return AssetBundlesConfigs.AssetBundleDirectoryStandaloneWindows;
-            if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.AssetBundleDirectoryWebGL;
+            if (Application.isEditor == true) return AssetBundlesConfigs.Instance.AssetBundleDirectoryStandaloneWindows;
+            if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.Instance.AssetBundleDirectoryWebGL;
 
         }
 
