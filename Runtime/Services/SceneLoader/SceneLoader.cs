@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public class SceneLoader : ISceneLoader
     {

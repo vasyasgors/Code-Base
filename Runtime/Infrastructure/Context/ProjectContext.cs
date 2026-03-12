@@ -1,4 +1,4 @@
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public class ProjectContext : Context
     {

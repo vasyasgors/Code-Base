@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
 	/// <summary>
 	/// Keeps reference to a scene asset and tracks it's path, so it can be used in the game runtime.

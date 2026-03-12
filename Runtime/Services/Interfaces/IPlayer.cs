@@ -1,10 +1,10 @@
 ﻿
-using CodeBase.Infractructure;
+using CodeBase.Infrastructure;
 using System.Threading.Tasks;
 using UnityEngine.Events;
 
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     
     public interface IPlayer : IService

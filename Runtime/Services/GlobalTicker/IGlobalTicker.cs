@@ -1,6 +1,6 @@
-﻿using CodeBase.Infractructure;
+﻿using CodeBase.Infrastructure;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public interface IGlobalTicker : IService
     {

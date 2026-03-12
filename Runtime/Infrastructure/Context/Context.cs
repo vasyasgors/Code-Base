@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public abstract class Context : MonoBehaviour
     {

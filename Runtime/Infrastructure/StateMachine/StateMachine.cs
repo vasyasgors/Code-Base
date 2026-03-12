@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public abstract class StateMachine 
     {
@@ -53,6 +53,28 @@ namespace CodeBase.Infractructure
             Entered?.Invoke(currentState.GetType());
         }
 
+        public void Enter(Type type)
+        {
+            if (currentState != null && type == currentState.GetType()) return;
+
+            SetState(type);
+
+            if (currentState is IEnterableState enterableState) enterableState.Enter();
+
+            Entered?.Invoke(currentState.GetType());
+        }
+
+        public void Enter<TPayload>(Type type)
+        {
+            if (currentState != null && type == currentState.GetType()) return;
+
+            SetState(type);
+
+            if (currentState is IEnterableState<TPayload> enterableState) enterableState.Enter(default(TPayload));
+
+            Entered?.Invoke(currentState.GetType());
+        }
+
         public void Exit<TState>() where TState : class, IState
         {
             if (currentState is IExitableState exitableState) exitableState.Exit();
@@ -76,6 +98,17 @@ namespace CodeBase.Infractructure
             currentState = state;
         }
 
+        private void SetState(Type type)
+        {
+            if (currentState is IExitableState exitableState) exitableState.Exit();
+
+            object state;
+        
+            if (states.TryGetValue(type, out state))
+            {
+                currentState = state;
+            }
+        }
     }
 
 }

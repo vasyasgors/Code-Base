@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public interface IPlayerProgressSaveLoad : IService
     {

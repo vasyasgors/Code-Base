@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     [DefaultExecutionOrder(-10000)] 
     public class SceneContext : Context

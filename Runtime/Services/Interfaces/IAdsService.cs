@@ -1,9 +1,9 @@
 ﻿
-using CodeBase.Infractructure;
+using CodeBase.Infrastructure;
 using System;
 using UnityEngine.Events;
 
-namespace CodeBase.Infractructure
+namespace CodeBase.Infrastructure
 {
     public interface IAdsService : IService
     {
