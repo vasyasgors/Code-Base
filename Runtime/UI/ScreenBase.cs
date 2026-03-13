@@ -9,16 +9,19 @@ namespace CodeBase.UI
     public abstract class ScreenBase : UIElementBase
     {
         [SerializeField] private Text titileText;
-        [SerializeField] private Button CloseButton;
+        [SerializeField] private Button closeButton;
+        [SerializeField] private Button hideButton;
 
         private void Awake()
         {
-            CloseButton?.onClick.AddListener(Close);
+            closeButton?.onClick.AddListener(Close);
+            hideButton?.onClick.AddListener(Hide);
         }
 
         private void OnDestroy()
         {
-            CloseButton?.onClick.RemoveAllListeners();
+            closeButton?.onClick.RemoveAllListeners();
+            hideButton?.onClick.RemoveAllListeners();
         }
 
         public void SetTitle(string title)
