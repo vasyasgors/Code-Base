@@ -14,7 +14,7 @@ namespace CodeBase
 
         void Start()
         {
-            if (RuntimeEnvironment.CurrentRuntimeEnvironment == RuntimeEnvironmentType.Moblie)
+            if (RuntimeEnvironment.CurrentRuntimeEnvironment == RuntimeEnvironmentType.Mobile)
             {
                 RenderSettings.fogStartDistance = fogStartDistanceOnMobile;
                 RenderSettings.fogEndDistance = fogEndDistanceOnMobile;

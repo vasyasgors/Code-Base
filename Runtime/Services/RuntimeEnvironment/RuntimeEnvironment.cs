@@ -5,7 +5,7 @@ namespace CodeBase.Infrastructure
 {
     public static class RuntimeEnvironment
     {
-        private const RuntimeEnvironmentType EditorRuntimeEnvironment = RuntimeEnvironmentType.Moblie;
+        private const RuntimeEnvironmentType EditorRuntimeEnvironment = RuntimeEnvironmentType.Mobile;
 
         public static RuntimeEnvironmentType CurrentRuntimeEnvironment
         {
@@ -19,9 +19,9 @@ namespace CodeBase.Infrastructure
         {
             if (Application.platform == RuntimePlatform.WindowsEditor) return EditorRuntimeEnvironment;
 
-            if (Application.platform == RuntimePlatform.IPhonePlayer) return RuntimeEnvironmentType.Moblie;
+            if (Application.platform == RuntimePlatform.IPhonePlayer) return RuntimeEnvironmentType.Mobile;
 
-            if (Application.platform == RuntimePlatform.Android) return RuntimeEnvironmentType.Moblie;
+            if (Application.platform == RuntimePlatform.Android) return RuntimeEnvironmentType.Mobile;
 
             if (Application.platform == RuntimePlatform.WebGLPlayer)
             {
@@ -31,7 +31,7 @@ namespace CodeBase.Infrastructure
 
                 if (game != null)
                 {
-                    if (game.IsMobile == true) return RuntimeEnvironmentType.Moblie;
+                    if (game.IsMobile == true) return RuntimeEnvironmentType.Mobile;
 
                     if (game.IsMobile == false) return RuntimeEnvironmentType.Standalone;
                 }
