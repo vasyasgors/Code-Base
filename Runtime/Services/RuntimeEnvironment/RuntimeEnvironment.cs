@@ -6,7 +6,20 @@ namespace CodeBase.Infrastructure
 
     public static class RuntimeEnvironment
     {
-        public static RuntimeEnvironmentType EditorRuntimeEnvironment = RuntimeEnvironmentType.Standalone;
+#if UNITY_EDITOR
+        public static RuntimeEnvironmentType EditorRuntimeEnvironment 
+        {
+            get
+            {
+                if (RuntimeEnvironmentMenu.IsDesktopEnabled == true) return RuntimeEnvironmentType.Standalone;
+                if (RuntimeEnvironmentMenu.IsMobileEnabled == true) return RuntimeEnvironmentType.Mobile;
+
+                return RuntimeEnvironmentType.Unknown;
+            }
+        }
+
+
+#endif
 
         public static RuntimeEnvironmentType CurrentRuntimeEnvironment
         {
@@ -18,7 +31,9 @@ namespace CodeBase.Infrastructure
 
         private static RuntimeEnvironmentType GetCurrentRuntimeEnvironment()
         {
+#if UNITY_EDITOR
             if (Application.platform == RuntimePlatform.WindowsEditor) return EditorRuntimeEnvironment;
+#endif
 
             if (Application.platform == RuntimePlatform.IPhonePlayer) return RuntimeEnvironmentType.Mobile;
 
