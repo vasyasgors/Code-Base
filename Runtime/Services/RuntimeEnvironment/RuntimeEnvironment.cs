@@ -3,9 +3,10 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure
 {
+
     public static class RuntimeEnvironment
     {
-        private const RuntimeEnvironmentType EditorRuntimeEnvironment = RuntimeEnvironmentType.Mobile;
+        public static RuntimeEnvironmentType EditorRuntimeEnvironment = RuntimeEnvironmentType.Standalone;
 
         public static RuntimeEnvironmentType CurrentRuntimeEnvironment
         {
