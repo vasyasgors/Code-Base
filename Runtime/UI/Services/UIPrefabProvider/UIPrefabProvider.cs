@@ -5,13 +5,13 @@ namespace CodeBase.UI
 {
     public class UIPrefabProvider : MonoBehaviour, IUIPrefabProvider
     {
-        [Header("UI Windows (Must be unique)")]
+        [Header("UI Screens (Must be unique)")]
         [SerializeField] private ScreenBase[] screenPrefabs;
 
-        [Header("UI Panel (Must be unique)")]
+        [Header("UI Panels (Must be unique)")]
         [SerializeField] private PanelBase[] panelsPrefabs;
 
-        [Header("UI popup (Must be unique)")]
+        [Header("UI Popups (Must be unique)")]
         [SerializeField] private PopupBase[] popupPrefabs;
 
         [Header("UI Elements (Must be unique)")]
