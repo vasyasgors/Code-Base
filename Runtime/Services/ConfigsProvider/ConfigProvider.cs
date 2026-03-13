@@ -31,7 +31,7 @@ namespace CodeBase.Infrastructure
 
         public TConfig GetConfig<TConfig>() where TConfig : ScriptableObject
         {
-            if (configDictionary.Count == 0)
+            if (configDictionary == null)
             {
                 Load();
             }
