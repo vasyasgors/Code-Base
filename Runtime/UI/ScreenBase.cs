@@ -4,13 +4,11 @@ using UnityEngine.UI;
 
 namespace CodeBase.UI
 {
-    public abstract class ScreenBase : MonoBehaviour
+
+
+    public abstract class ScreenBase : UIElementBase
     {
-        public event UnityAction Closed;
-
         [SerializeField] private Text titileText;
-
-        protected virtual void OnClose() { }
 
         public void SetTitle(string title)
         {
@@ -18,15 +16,6 @@ namespace CodeBase.UI
 
             titileText.text = title;
         }
-
-        public void Close()
-        {
-            Closed?.Invoke();
-            OnClose();
-            Destroy(gameObject);
-        }
-
-
     }
 }
 

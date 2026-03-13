@@ -2,12 +2,9 @@
 
 namespace CodeBase.UI
 {
-    public abstract class PanelBase : MonoBehaviour
+    public abstract class PanelBase : UIElementBase
     {
-        public void Close()
-        {
-            Destroy(gameObject);
-        }
+
     }
 }
 
