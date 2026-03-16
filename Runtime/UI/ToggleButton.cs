@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 
@@ -8,6 +9,8 @@ namespace CodeBase.UI
     [RequireComponent(typeof(Button), typeof(Image))]
     public class ToggleButton : MonoBehaviour
     {
+        public event UnityAction<bool> Changed;
+
         [Header("Sprites")]
         [SerializeField] private Sprite onSprite;
         [SerializeField] private Sprite offSprite;
@@ -28,6 +31,8 @@ namespace CodeBase.UI
             {
                 if (isOn == value) return;
                 isOn = value;
+
+                Changed?.Invoke(value);
                 ApplyState();
             }
         }
