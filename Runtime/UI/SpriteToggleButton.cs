@@ -16,17 +16,18 @@ namespace CodeBase.UI
         [SerializeField] private Color onColor = Color.white;
         [SerializeField] private Color offColor = Color.white;
 
+        [SerializeField] private bool isOn;
+
         private Image _image;
         private Button _button;
-        private bool _isOn;
 
         public bool Toggle
         {
-            get => _isOn;
+            get => isOn;
             set
             {
-                if (_isOn == value) return;
-                _isOn = value;
+                if (isOn == value) return;
+                isOn = value;
                 ApplyState();
             }
         }
@@ -35,6 +36,7 @@ namespace CodeBase.UI
         {
             _image = GetComponent<Image>();
             _button = GetComponent<Button>();
+
             _button.onClick.AddListener(OnClick);
 
             ApplyState();
@@ -47,15 +49,15 @@ namespace CodeBase.UI
 
         private void OnClick()
         {
-            Toggle = !_isOn;
+            Toggle = !isOn;
         }
 
         private void ApplyState()
         {
             if (_image == null) return;
 
-            _image.sprite = _isOn ? onSprite : offSprite;
-            _image.color = _isOn ? onColor : offColor;
+            _image.sprite = isOn ? onSprite : offSprite;
+            _image.color = isOn ? onColor : offColor;
         }
     }
 
