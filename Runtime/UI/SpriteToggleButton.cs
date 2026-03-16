@@ -6,50 +6,56 @@ namespace CodeBase.UI
 {
 
     [RequireComponent(typeof(Button), typeof(Image))]
-    public class SpriteToggleButton : MonoBehaviour
+    public class ToggleButton : MonoBehaviour
     {
-        [SerializeField] private Sprite[] sprites;
-        [SerializeField] private Color[] colors;
+        [Header("Sprites")]
+        [SerializeField] private Sprite onSprite;
+        [SerializeField] private Sprite offSprite;
+
+        [Header("Colors")]
+        [SerializeField] private Color onColor = Color.white;
+        [SerializeField] private Color offColor = Color.white;
 
         private Image _image;
-        private int _index;
+        private Button _button;
+        private bool _isOn;
+
+        public bool Toggle
+        {
+            get => _isOn;
+            set
+            {
+                if (_isOn == value) return;
+                _isOn = value;
+                ApplyState();
+            }
+        }
 
         private void Awake()
         {
             _image = GetComponent<Image>();
+            _button = GetComponent<Button>();
+            _button.onClick.AddListener(OnClick);
 
-            if (sprites != null && sprites.Length > 0)
-            {
-                _index = 0;
-                ApplyState();
-            }
-
-            GetComponent<Button>().onClick.AddListener(OnClick);
+            ApplyState();
         }
 
         private void OnDestroy()
         {
-            GetComponent<Button>().onClick.RemoveListener(OnClick);
+            _button.onClick.RemoveListener(OnClick);
         }
 
         private void OnClick()
         {
-            if (sprites == null || sprites.Length == 0) return;
-
-            _index = (_index + 1) % sprites.Length;
-            ApplyState();
+            Toggle = !_isOn;
         }
 
         private void ApplyState()
         {
-            if (_index >= 0 && _index < sprites.Length && sprites[_index] != null)
-                _image.sprite = sprites[_index];
+            if (_image == null) return;
 
-            if (colors != null && colors.Length > 0)
-            {
-                int colorIndex = Mathf.Clamp(_index, 0, colors.Length - 1);
-                _image.color = colors[colorIndex];
-            }
+            _image.sprite = _isOn ? onSprite : offSprite;
+            _image.color = _isOn ? onColor : offColor;
         }
     }
 
