@@ -7,7 +7,7 @@ namespace CodeBase.Infrastructure
     public static class RuntimeEnvironment
     {
 #if UNITY_EDITOR
-        public static RuntimeEnvironmentType EditorRuntimeEnvironment 
+        private static RuntimeEnvironmentType EditorRuntimeEnvironment 
         {
             get
             {
