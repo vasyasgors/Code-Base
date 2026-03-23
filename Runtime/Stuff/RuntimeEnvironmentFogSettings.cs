@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace CodeBase
 {
-    public class FogSettingsByRuntimeEnvironment : MonoBehaviour 
+    public class RuntimeEnvironmentFogSettings : MonoBehaviour 
     {
         [SerializeField] private float fogStartDistanceOnMobile;
         [SerializeField] private float fogEndDistanceOnMobile;

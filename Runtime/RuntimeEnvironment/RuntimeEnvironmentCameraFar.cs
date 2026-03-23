@@ -3,7 +3,7 @@ using CodeBase.Infrastructure;
 
 namespace CodeBase
 {
-    public class CameraFarByRuntimeEnvironment : MonoBehaviour 
+    public class RuntimeEnvironmentCameraFar : MonoBehaviour 
     {
         [SerializeField] private new Camera camera;
         [SerializeField] private float distanceOnMobile;
