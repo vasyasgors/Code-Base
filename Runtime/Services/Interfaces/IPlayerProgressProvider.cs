@@ -2,8 +2,13 @@
 {
     public interface IPlayerProgressProvider : IService
     {
-        PlayerProgress Progress { get; set; }
-        PlayerProgress DefaultProgress { get; }
+        int SaveVersion { get; }
+
+        int ReadSaveVerstion(string json);
+        void IncrementSaveVerstion();
+        void SetProgress(string json);
+        void SetDefaultProgress();
+        string GetProgress();
     }
 }
 
