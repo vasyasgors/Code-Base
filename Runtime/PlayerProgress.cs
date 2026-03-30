@@ -2,7 +2,6 @@
 
 namespace CodeBase.Infrastructure
 {
-    [System.Serializable]
     public partial class PlayerProgress
     {
         public int SaveVersion = 0;
