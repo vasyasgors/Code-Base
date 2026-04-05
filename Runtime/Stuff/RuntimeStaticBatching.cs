@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CodeBase
 {
-    public class StaticBatchingRuntime : MonoBehaviour
+    public class RuntimeStaticBatching : MonoBehaviour
     {
         void Awake()
         {
