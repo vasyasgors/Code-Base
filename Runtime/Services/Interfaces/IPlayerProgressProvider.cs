@@ -3,12 +3,14 @@
     public interface IPlayerProgressProvider : IService
     {
         int SaveVersion { get; }
+        
+        TProgress GetProgress<TProgress>();
 
-        int ReadSaveVerstion(string json);
+        int ReadSaveVersionJSON(string json);
+        void SetProgressJSON(string json);
+        string GetProgressJSON();
         void IncrementSaveVerstion();
-        void SetProgress(string json);
         void SetDefaultProgress();
-        string GetProgress();
     }
 }
 
