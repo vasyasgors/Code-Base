@@ -4,7 +4,7 @@
     {
         int SaveVersion { get; }
         
-        TProgress GetProgress<TProgress>();
+        TProgress GetProgress<TProgress>() where TProgress : class;
 
         int ReadSaveVersionJSON(string json);
         void SetProgressJSON(string json);
