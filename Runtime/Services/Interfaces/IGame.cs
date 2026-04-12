@@ -17,6 +17,8 @@ namespace CodeBase.Infrastructure
         void GameplayStart();
         void GameplayStop();
 
+        long GetServerTimeMillisecond();
+
 
         bool IsMobile { get; }
     }
