@@ -6,13 +6,13 @@ namespace CodeBase.Infrastructure
     [CreateAssetMenu(fileName = "Asset Bundles Configs", menuName = "Configs/Asset Bundles Configs")]
     public class AssetBundlesConfigs : ScriptableObject
     {
-        private const string Path = @"Assets/Resources/LocalizationSettings.asset";
+        //private const string Path = @"Assets/Resources/LocalizationSettings.asset";
 
-        public string AssetBundleDirectoryStandaloneWindows = "D:/Repositories/vasyasgors.github.io/UnityAssetBundles/" + Application.productName + "/StandaloneWindows";
-        public string AssetBundleDirectoryWebGL = "D:/Repositories/vasyasgors.github.io/UnityAssetBundles/" + Application.productName + "/WebGL";
+        public string AssetBundleDirectoryStandaloneWindows = "D:/Repositories/vasyasgors.github.io/UnityAssetBundles/";// + Application.productName + "/StandaloneWindows";
+        public string AssetBundleDirectoryWebGL = "D:/Repositories/vasyasgors.github.io/UnityAssetBundles/"; // + Application.productName + "/WebGL";
 
-        public string AssetBundleRemoteURLStandaloneWindows = "https://storage.yandexcloud.net/unityassets/" + Application.productName + "/StandaloneWindows";
-        public string AssetBundleRemoteURLWebGL = "https://storage.yandexcloud.net/unityassets/" + Application.productName + "/WebGL";
+        public string AssetBundleRemoteURLStandaloneWindows = "https://storage.yandexcloud.net/unityassets/";// + Application.productName + "/StandaloneWindows";
+        public string AssetBundleRemoteURLWebGL = "https://storage.yandexcloud.net/unityassets/";// + Application.productName + "/WebGL";
 
         private static AssetBundlesConfigs _instance;
 
@@ -20,14 +20,14 @@ namespace CodeBase.Infrastructure
         {
             get
             {
-                if (_instance == null) _instance = LoadSettings();
+                if (_instance == null) _instance = LoadConfig();
                 return _instance;
             }
         }
 
-        private static AssetBundlesConfigs LoadSettings()
+        private static AssetBundlesConfigs LoadConfig()
         {
-            var settings = Resources.Load<AssetBundlesConfigs>(System.IO.Path.GetFileNameWithoutExtension(Path));
+            var settings = Resources.LoadAll<AssetBundlesConfigs>("")[0];
 
             if (settings != null)
                 return settings;
