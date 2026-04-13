@@ -7,7 +7,7 @@ namespace CodeBase.UI
     {
         [SerializeField] protected Text text;
 
-        public abstract void Show(string message, float showedTime);
-        public abstract void Show(string message);
+        public abstract PopupBase Show(string message, float showedTime);
+        public abstract PopupBase Show(string message);
     }
 }
