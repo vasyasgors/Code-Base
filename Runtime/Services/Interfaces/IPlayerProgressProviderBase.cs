@@ -1,6 +1,6 @@
 ﻿namespace CodeBase.Infrastructure
 {
-    public interface IPlayerProgressProvider : IService
+    public interface IPlayerProgressProviderBase : IService
     {
         int SaveVersion { get; }
         
