@@ -14,7 +14,7 @@ namespace CodeBase.UI
         [Header("UI Popups (Must be unique)")]
         [SerializeField] private PopupBase[] popupPrefabs;
 
-        [Header("UI Elements (Must be unique)")]
+        [Header("UI Prefabs (Must be unique)")]
         [SerializeField] private GameObject[] uiElementsPrefabs;
 
 
