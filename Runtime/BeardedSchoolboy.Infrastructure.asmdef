@@ -1,5 +1,5 @@
 {
-    "name": "Infrastructure",
+    "name": "CodeBase.Infrastructure",
     "rootNamespace": "Infrastructure",
     "references": [],
     "includePlatforms": [],
