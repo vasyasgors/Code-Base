@@ -14,7 +14,7 @@ namespace Infrastructure
         CrazyGames,
     }
 
-    [CreateAssetMenu(fileName = "GameBuildConfig", menuName = "Build/Game Build Config")]
+    [CreateAssetMenu(fileName = "Distribution Platform Config", menuName = "Config/Distribution Platform Config")]
     public class GameBuildConfig : ScriptableObject
     {
         public const string DistributionPlatformPrefix = "DISTRIBUTION_PLATFORM_";
