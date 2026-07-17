@@ -5,22 +5,26 @@ using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Infrastructure;
+using System.Linq;
 
 namespace CodeBase.Infrastructure.Editor
 {
     public static class WebGLZipPostprocessor
     {
-        private const string ConfigPath = "Assets/Resources/GameBuildConfig.asset";
-
         [PostProcessBuild]
         public static void CreateZip(BuildTarget target, string pathToBuiltProject)
         {
             if (target != BuildTarget.WebGL)
                 return;
 
-            var config = AssetDatabase.LoadAssetAtPath<GameBuildConfig>(ConfigPath);
+            var guids = AssetDatabase.FindAssets("t:GameBuildConfig");
+            var config = guids
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(path => AssetDatabase.LoadAssetAtPath<GameBuildConfig>(path))
+                .FirstOrDefault(x => x != null);
 
-            string platformName = config != null ? config.GetVariantName() : "WebGL";
+
+            string platformName = config != null ? config.GetVariantName() : EditorUserBuildSettings.activeBuildTarget.ToString();
             string version = config != null ? PlayerSettings.bundleVersion : PlayerSettings.bundleVersion;
             string gameName = config != null ? PlayerSettings.productName : PlayerSettings.productName;
 
