@@ -8,29 +8,26 @@ namespace CodeBase.Infrastructure
 {
     public static class AssetBundlesLoader
     {
-        private static AssetBundlesConfigs AssetBundlesConfigs;
+
 
         private static string GetAssetBundlesPath(bool remote)
         {
             if (remote == true)
             {
-                if (Application.isEditor == true) return AssetBundlesConfigs.AssetBundleRemoteURLStandaloneWindows;
-                if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.AssetBundleRemoteURLWebGL;
+                if (Application.isEditor == true) return AssetBundlesConfigs.Instance.AssetBundleRemoteURLStandaloneWindows;
+                if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.Instance.AssetBundleRemoteURLWebGL;
             }
 
             if (remote == false)
             {
-                if (Application.isEditor == true) return AssetBundlesConfigs.AssetBundleDirectoryStandaloneWindows;
-                if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.AssetBundleDirectoryWebGL;
+                if (Application.isEditor == true) return AssetBundlesConfigs.Instance.AssetBundleDirectoryStandaloneWindows;
+                if (Application.platform == RuntimePlatform.WebGLPlayer) return AssetBundlesConfigs.Instance.AssetBundleDirectoryWebGL;
             }
 
             return "";
         }
 
-        public static void SetConfig(AssetBundlesConfigs assetBundlesConfigs)
-        {
-            AssetBundlesConfigs = assetBundlesConfigs;
-        }
+
 
         public static IEnumerator LoadAssetBundle(string bundleName, uint version, Action<AssetBundle> onSuccess, bool remote = false)
         {
