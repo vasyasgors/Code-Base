@@ -9,9 +9,10 @@ namespace Infrastructure
 
     public enum DistributionPlatform
     {
-        All,
-        YandexGames,
-        CrazyGames,
+        All = 0,
+        YandexGames = 1,
+        CrazyGames = 2,
+        PrimeSDK = 3
     }
 
     [CreateAssetMenu(fileName = "Distribution Platform Config", menuName = "Configs/Distribution Platform Config")]
@@ -26,6 +27,7 @@ namespace Infrastructure
             if (currentDistributionPlatform == DistributionPlatform.All) return DistributionPlatformPrefix + "ALL";
             if (currentDistributionPlatform == DistributionPlatform.YandexGames) return DistributionPlatformPrefix + "YANDEX_GAMES";
             if (currentDistributionPlatform == DistributionPlatform.CrazyGames) return DistributionPlatformPrefix + "CRAZY_GAMES";
+            if (currentDistributionPlatform == DistributionPlatform.PrimeSDK) return DistributionPlatformPrefix + "PRIME_SDK";
 
             return DistributionPlatformPrefix + "ALL";
 
