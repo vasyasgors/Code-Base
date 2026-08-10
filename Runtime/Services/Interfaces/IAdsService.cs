@@ -7,10 +7,6 @@ namespace CodeBase.Infrastructure
 {
     public interface IAdsService : IService
     {
-        bool IsShowFullscreenAd { get; set; }
-        bool IsShowRewardedAd { get; set; }
-        bool IsShowStickyBanner { get; set; }
-
         bool IsFullscreenAvailable { get; set; }
         bool IsRewardedAvailable { get; set; }
         bool IsStickyAvailable { get; set; }
