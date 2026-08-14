@@ -37,7 +37,7 @@ namespace Infrastructure
 
         public string GetVariantName()
         {
-            return currentDistributionPlatform.ToString();
+            return currentDistributionPlatform.ToString(); 
         }
     }
 
