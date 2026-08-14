@@ -12,7 +12,8 @@ namespace Infrastructure
         All = 0,
         YandexGames = 1,
         CrazyGames = 2,
-        PrimeSDK = 3
+        PrimeSDK = 3,
+        Poki = 4
     }
 
     [CreateAssetMenu(fileName = "Distribution Platform Config", menuName = "Configs/Distribution Platform Config")]
@@ -28,6 +29,7 @@ namespace Infrastructure
             if (currentDistributionPlatform == DistributionPlatform.YandexGames) return DistributionPlatformPrefix + "YANDEX_GAMES";
             if (currentDistributionPlatform == DistributionPlatform.CrazyGames) return DistributionPlatformPrefix + "CRAZY_GAMES";
             if (currentDistributionPlatform == DistributionPlatform.PrimeSDK) return DistributionPlatformPrefix + "PRIME_SDK";
+            if (currentDistributionPlatform == DistributionPlatform.Poki) return DistributionPlatformPrefix + "POKI";
 
             return DistributionPlatformPrefix + "ALL";
 
