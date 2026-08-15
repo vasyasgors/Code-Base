@@ -13,7 +13,12 @@ namespace Infrastructure
         YandexGames = 1,
         CrazyGames = 2,
         PrimeSDK = 3,
-        Poki = 4
+        Poki = 4,
+        Y8 = 5,
+        PlayGama = 6,
+        GameDistribution = 7,
+        Lagged = 8,
+        XiaomiWeb = 9
     }
 
     [CreateAssetMenu(fileName = "Distribution Platform Config", menuName = "Configs/Distribution Platform Config")]
@@ -30,6 +35,11 @@ namespace Infrastructure
             if (currentDistributionPlatform == DistributionPlatform.CrazyGames) return DistributionPlatformPrefix + "CRAZY_GAMES";
             if (currentDistributionPlatform == DistributionPlatform.PrimeSDK) return DistributionPlatformPrefix + "PRIME_SDK";
             if (currentDistributionPlatform == DistributionPlatform.Poki) return DistributionPlatformPrefix + "POKI";
+            if (currentDistributionPlatform == DistributionPlatform.Y8) return DistributionPlatformPrefix + "Y8";
+            if (currentDistributionPlatform == DistributionPlatform.PlayGama) return DistributionPlatformPrefix + "PLAY_GAMA";
+            if (currentDistributionPlatform == DistributionPlatform.GameDistribution) return DistributionPlatformPrefix + "GAME_DISTRIBUTION";
+            if (currentDistributionPlatform == DistributionPlatform.Lagged) return DistributionPlatformPrefix + "LAGGED";
+            if (currentDistributionPlatform == DistributionPlatform.XiaomiWeb) return DistributionPlatformPrefix + "XIAOMI_WEB";
 
             return DistributionPlatformPrefix + "ALL";
 
