@@ -1,4 +1,6 @@
-﻿namespace CodeBase.Infrastructure
+﻿using System;
+
+namespace CodeBase.Infrastructure
 {
     public interface IPlayerProgressProviderBase : IService
     {
@@ -9,6 +11,25 @@
         string GetProgressJSON();
         void IncrementSaveVerstion();
         void SetDefaultProgress();
+    }
+
+    public interface IBeforeSaveEvent
+    {
+        event Action BeforeSave;
+    }
+    public interface IAfterSaveEvent
+    {
+        event Action AfterSave;
+    }
+
+    public interface IBeforeLoadEvent
+    {
+        event Action BeforeLoad;
+    }
+
+    public interface IAfterLoadEvent
+    {
+        event Action AfterLoad;
     }
 }
 
