@@ -19,6 +19,7 @@ namespace CodeBase.Infrastructure
 
         long GetServerTimeMillisecond();
 
+        void UnlockAchievement(string id);
 
         bool IsMobile { get; }
     }
