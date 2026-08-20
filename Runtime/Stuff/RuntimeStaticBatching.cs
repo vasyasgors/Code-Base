@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -17,12 +17,9 @@ namespace CodeBase
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
 
-            foreach (Transform child in transform)
-            {
-                GameObjectUtility.SetStaticEditorFlags(child.gameObject, StaticEditorFlags.BatchingStatic);
-            }
 
             StaticBatchingUtility.Combine(gameObject);
+
             SceneManager.sceneLoaded -= OnSceneLoaded;
             
         }
