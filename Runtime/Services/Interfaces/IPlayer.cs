@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace CodeBase.Infrastructure
 {
-    
+
     public interface IPlayer : IService
     {
         void Init();
