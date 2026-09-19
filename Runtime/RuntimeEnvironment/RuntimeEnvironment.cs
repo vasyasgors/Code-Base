@@ -39,6 +39,8 @@ namespace CodeBase.Infrastructure
 
             if (Application.platform == RuntimePlatform.Android) return RuntimeEnvironmentType.Mobile;
 
+            if (Application.platform == RuntimePlatform.WindowsPlayer) return RuntimeEnvironmentType.Standalone;
+
             if (Application.platform == RuntimePlatform.WebGLPlayer)
             {
                 IGame game = ServiceContainer.Single<IGame>();
