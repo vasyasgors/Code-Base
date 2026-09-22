@@ -18,7 +18,9 @@ namespace Infrastructure
         PlayGama = 6,
         GameDistribution = 7,
         Lagged = 8,
-        XiaomiWeb = 9
+        XiaomiWeb = 9,
+        RuStore = 10,
+        GooglePlay = 11
     }
 
     [CreateAssetMenu(fileName = "Distribution Platform Config", menuName = "Configs/Distribution Platform Config")]
@@ -40,6 +42,8 @@ namespace Infrastructure
             if (currentDistributionPlatform == DistributionPlatform.GameDistribution) return DistributionPlatformPrefix + "GAME_DISTRIBUTION";
             if (currentDistributionPlatform == DistributionPlatform.Lagged) return DistributionPlatformPrefix + "LAGGED";
             if (currentDistributionPlatform == DistributionPlatform.XiaomiWeb) return DistributionPlatformPrefix + "XIAOMI_WEB";
+            if (currentDistributionPlatform == DistributionPlatform.RuStore) return DistributionPlatformPrefix + "RUSTORE";
+            if (currentDistributionPlatform == DistributionPlatform.GooglePlay) return DistributionPlatformPrefix + "GOOGLE_PLAY";
 
             return DistributionPlatformPrefix + "ALL";
 
