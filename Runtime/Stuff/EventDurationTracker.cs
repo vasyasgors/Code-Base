@@ -8,9 +8,9 @@ namespace CodeBase
     {
         private static readonly Dictionary<TKey, DateTime> startTimes = new Dictionary<TKey, DateTime>();
 
-        public static void Start(TKey id, bool recordTime = true)
+        public static void Start(TKey id, bool resetTime = true)
         {
-            if (recordTime == false)
+            if (resetTime == false)
             {
                 if (IsRunning(id) == false)
                 {
