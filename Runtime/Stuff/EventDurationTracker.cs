@@ -8,9 +8,21 @@ namespace CodeBase
     {
         private static readonly Dictionary<TKey, DateTime> startTimes = new Dictionary<TKey, DateTime>();
 
-        public static void Start(TKey id)
+        public static void Start(TKey id, bool recordTime = true)
         {
-            startTimes[id] = DateTime.UtcNow;
+            if (recordTime == false)
+            {
+                if (IsRunning(id) == false)
+                {
+                    startTimes[id] = DateTime.UtcNow;
+                    return;
+                }
+
+            }
+            else
+            {
+                startTimes[id] = DateTime.UtcNow;
+            }
         }
 
         public static int GetElapsedSeconds(TKey id, bool clearTime = true)
