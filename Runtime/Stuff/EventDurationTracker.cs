@@ -2,53 +2,36 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class EventDurationTracker
+public static class EventTimerRegistry<TKey> where TKey : Enum
 {
-    private static readonly Dictionary<string, DateTime> startTimes = new Dictionary<string, DateTime>();
+    private static readonly Dictionary<TKey, DateTime> startTimes = new Dictionary<TKey, DateTime>();
 
-    public static void Start(string id)
+    public static void Start(TKey id)
     {
-        if (string.IsNullOrEmpty(id))
-        {
-            Debug.LogWarning("[EventTimerService] Start: id не может быть пустым.");
-            return;
-        }
-
         startTimes[id] = DateTime.UtcNow;
     }
 
-    public static int GetElapsedSeconds(string id, bool removeEvent = true)
+    public static int GetElapsedSeconds(TKey id, bool clearTime = true)
     {
-        if (string.IsNullOrEmpty(id))
-        {
-            Debug.LogWarning("[EventTimerService] GetElapsedSeconds: id не может быть пустым.");
-            return -1;
-        }
-
         if (!startTimes.TryGetValue(id, out DateTime startTime))
         {
-            Debug.LogWarning($"[EventTimerService] GetElapsedSeconds: таймер с id '{id}' не был запущен.");
+            Debug.LogWarning($"[EventTimerRegistry] Timer '{id}' was not started.");
             return -1;
         }
 
-        int elapsedSeconds = (int)(DateTime.UtcNow - startTime).TotalSeconds;
-
-        if(removeEvent == true)
+        if(clearTime == true)
             startTimes.Remove(id);
 
-        return elapsedSeconds;
+        return (int)(DateTime.UtcNow - startTime).TotalSeconds;
     }
 
-    public static bool IsRunning(string id)
+    public static bool IsRunning(TKey id)
     {
-        return !string.IsNullOrEmpty(id) && startTimes.ContainsKey(id);
+        return startTimes.ContainsKey(id);
     }
 
-    public static void Cancel(string id)
+    public static void Cancel(TKey id)
     {
-        if (!string.IsNullOrEmpty(id))
-        {
-            startTimes.Remove(id);
-        }
+        startTimes.Remove(id);
     }
 }
