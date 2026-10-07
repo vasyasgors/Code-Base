@@ -2,36 +2,39 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class EventTimerRegistry<TKey> where TKey : Enum
+namespace CodeBase
 {
-    private static readonly Dictionary<TKey, DateTime> startTimes = new Dictionary<TKey, DateTime>();
-
-    public static void Start(TKey id)
+    public static class EventTimerRegistry<TKey> where TKey : Enum
     {
-        startTimes[id] = DateTime.UtcNow;
-    }
+        private static readonly Dictionary<TKey, DateTime> startTimes = new Dictionary<TKey, DateTime>();
 
-    public static int GetElapsedSeconds(TKey id, bool clearTime = true)
-    {
-        if (!startTimes.TryGetValue(id, out DateTime startTime))
+        public static void Start(TKey id)
         {
-            Debug.LogWarning($"[EventTimerRegistry] Timer '{id}' was not started.");
-            return -1;
+            startTimes[id] = DateTime.UtcNow;
         }
 
-        if(clearTime == true)
+        public static int GetElapsedSeconds(TKey id, bool clearTime = true)
+        {
+            if (!startTimes.TryGetValue(id, out DateTime startTime))
+            {
+                Debug.LogWarning($"[EventTimerRegistry] Timer '{id}' was not started.");
+                return -1;
+            }
+
+            if (clearTime == true)
+                startTimes.Remove(id);
+
+            return (int)(DateTime.UtcNow - startTime).TotalSeconds;
+        }
+
+        public static bool IsRunning(TKey id)
+        {
+            return startTimes.ContainsKey(id);
+        }
+
+        public static void Cancel(TKey id)
+        {
             startTimes.Remove(id);
-
-        return (int)(DateTime.UtcNow - startTime).TotalSeconds;
-    }
-
-    public static bool IsRunning(TKey id)
-    {
-        return startTimes.ContainsKey(id);
-    }
-
-    public static void Cancel(TKey id)
-    {
-        startTimes.Remove(id);
+        }
     }
 }
