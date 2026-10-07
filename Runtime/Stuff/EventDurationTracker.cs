@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CodeBase
 {
-    public static class EventTimerRegistry<TKey> where TKey : Enum
+    public static class EventDurationTracker<TKey> where TKey : Enum
     {
         private static readonly Dictionary<TKey, DateTime> startTimes = new Dictionary<TKey, DateTime>();
 
