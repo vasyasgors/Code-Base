@@ -17,7 +17,7 @@ public static class EventDurationTracker
         startTimes[id] = DateTime.UtcNow;
     }
 
-    public static int GetElapsedSeconds(string id)
+    public static int GetElapsedSeconds(string id, bool removeEvent = true)
     {
         if (string.IsNullOrEmpty(id))
         {
@@ -33,7 +33,8 @@ public static class EventDurationTracker
 
         int elapsedSeconds = (int)(DateTime.UtcNow - startTime).TotalSeconds;
 
-        startTimes.Remove(id);
+        if(removeEvent == true)
+            startTimes.Remove(id);
 
         return elapsedSeconds;
     }
