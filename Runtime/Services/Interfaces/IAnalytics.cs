@@ -6,7 +6,6 @@ namespace CodeBase.Infrastructure
     {
         void Init();
         public void SendEvent(string eventName);
-        public void SendEvent(string eventName, string nestedParam);
         public void SendEvent(string eventName, string nestedParam, string subNestedParam);
     }
 
