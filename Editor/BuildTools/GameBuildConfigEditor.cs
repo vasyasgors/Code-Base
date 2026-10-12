@@ -1,4 +1,4 @@
-using Infrastructure;
+using CodeBase.Infrastructure;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    [CustomEditor(typeof(GameBuildConfig))]
+    [CustomEditor(typeof(DistributionPlatformConfig))]
     public class GameBuildConfigEditor : UnityEditor.Editor
     {
         //SerializedProperty currentDistributionPlatform;
@@ -32,7 +32,7 @@ namespace CodeBase.Infrastructure.Editor
             {
                 serializedObject.ApplyModifiedProperties();
 
-                var config = (GameBuildConfig) target;
+                var config = (DistributionPlatformConfig) target;
                 ApplyDefines(config);
                 EditorUtility.SetDirty(config);
                 
@@ -62,30 +62,30 @@ namespace CodeBase.Infrastructure.Editor
             Debug.Log($"Applied define: {config.GetDefineSymbol()}");
         }
 
-        private static GameBuildConfig Load()
+        private static DistributionPlatformConfig Load()
         {
             var guids = AssetDatabase.FindAssets("t:GameBuildConfig");
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(path => AssetDatabase.LoadAssetAtPath<GameBuildConfig>(path))
+                .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))
                 .FirstOrDefault(x => x != null);
 
             if (config != null)
                 return config;
 
-            config = ScriptableObject.CreateInstance<GameBuildConfig>();
+            config = ScriptableObject.CreateInstance<DistributionPlatformConfig>();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return config;
         }
 
-        private static void ApplyDefines(GameBuildConfig config)
+        private static void ApplyDefines(DistributionPlatformConfig config)
         {
             var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
             var existing = PlayerSettings.GetScriptingDefineSymbols(target)
                 .Split(';')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Where(s => !s.StartsWith(GameBuildConfig.DistributionPlatformPrefix))
+                .Where(s => !s.StartsWith(DistributionPlatformConfig.DistributionPlatformPrefix))
                 .ToList();
 
             existing.Add(config.GetDefineSymbol());

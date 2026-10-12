@@ -4,7 +4,7 @@ using UnityEngine;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
-using Infrastructure;
+using CodeBase.Infrastructure;
 using System.Linq;
 
 namespace CodeBase.Infrastructure.Editor
@@ -20,7 +20,7 @@ namespace CodeBase.Infrastructure.Editor
             var guids = AssetDatabase.FindAssets("t:GameBuildConfig");
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(path => AssetDatabase.LoadAssetAtPath<GameBuildConfig>(path))
+                .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))
                 .FirstOrDefault(x => x != null);
 
 
