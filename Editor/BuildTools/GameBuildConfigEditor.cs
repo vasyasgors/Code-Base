@@ -11,13 +11,6 @@ namespace CodeBase.Infrastructure.Editor
     [CustomEditor(typeof(DistributionPlatformConfig))]
     public class GameBuildConfigEditor : UnityEditor.Editor
     {
-        //SerializedProperty currentDistributionPlatform;
-
-        void OnEnable()
-        {
-            //currentDistributionPlatform = serializedObject.FindProperty("currentDistributionPlatform");
-        }
-
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -64,7 +57,7 @@ namespace CodeBase.Infrastructure.Editor
 
         private static DistributionPlatformConfig Load()
         {
-            var guids = AssetDatabase.FindAssets("t:GameBuildConfig");
+            var guids = AssetDatabase.FindAssets("t:DistributionPlatformConfig");
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))
