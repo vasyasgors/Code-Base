@@ -17,7 +17,7 @@ namespace CodeBase.Infrastructure.Editor
             if (target != BuildTarget.WebGL)
                 return;
 
-            var guids = AssetDatabase.FindAssets("t:GameBuildConfig");
+            var guids = AssetDatabase.FindAssets("t:DistributionPlatformConfig");
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))

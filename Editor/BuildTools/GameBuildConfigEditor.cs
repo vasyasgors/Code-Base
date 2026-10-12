@@ -66,10 +66,8 @@ namespace CodeBase.Infrastructure.Editor
             if (config != null)
                 return config;
 
-            config = ScriptableObject.CreateInstance<DistributionPlatformConfig>();
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            return config;
+            Debug.LogError("[Distribution Platform Config] not found!");
+            return null;
         }
 
         private static void ApplyDefines(DistributionPlatformConfig config)
