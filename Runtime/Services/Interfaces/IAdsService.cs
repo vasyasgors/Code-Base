@@ -7,9 +7,9 @@ namespace CodeBase.Infrastructure
 {
     public interface IAdsService : IService
     {
-        bool IsFullscreenAvailable { get; set; }
-        bool IsRewardedAvailable { get; set; }
-        bool IsStickyAvailable { get; set; }
+        bool IsFullscreenAvailable { get; }
+        bool IsRewardedAvailable { get;  }
+        bool IsStickyAvailable { get;  }
 
         void ShowFullscreenAd(UnityAction onClosed = null);
         void ShowRewardedAd(UnityAction onRewarded = null, UnityAction onClosed = null);
