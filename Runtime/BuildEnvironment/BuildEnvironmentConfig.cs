@@ -34,6 +34,10 @@ namespace CodeBase.Infrastructure
         [HideInInspector]
         public int ActiveEnvironmentIndex = 0; // Хранит индекс выбранного окружения из списка
 
+        [Header("Current Synchronized Targets")]
+        public PlatformSDK CurrentPlatformSDK = PlatformSDK.Local;
+        public DistributionPlatform CurrentDistributionPlatform = DistributionPlatform.YandexGames;
+
         [Header("All Environment Configurations")]
         public List<EnvironmentSettings> Environments = new List<EnvironmentSettings>();
 
@@ -70,11 +74,11 @@ namespace CodeBase.Infrastructure
         }
 
 #if UNITY_EDITOR
-
         private void OnValidate()
         {
             if (Environments == null) return;
 
+            // 1. Автоматически форматируем названия элементов списка для красивого отображения
             for (int i = 0; i < Environments.Count; i++)
             {
                 var env = Environments[i];
@@ -82,6 +86,14 @@ namespace CodeBase.Infrastructure
                 {
                     env.label = $"[{env.Sdk}] + [{env.Platform}]";
                 }
+            }
+
+            // 2. Синхронизируем базовые поля класса с текущим активным окружением из выпадающего меню
+            var activeSettings = GetCurrentSettings();
+            if (activeSettings != null)
+            {
+                CurrentPlatformSDK = activeSettings.Sdk;
+                CurrentDistributionPlatform = activeSettings.Platform;
             }
         }
 #endif
