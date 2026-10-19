@@ -3,5 +3,11 @@
   "displayName": "Code Base",
   "version": "1.0.4",
   "unity": "2020.3",
-  "description": "Code Base"
+  "description": "Code Base",
+
+  "author": {
+    "name": "BeardedSchoolboy",
+  },
+
+
 }
