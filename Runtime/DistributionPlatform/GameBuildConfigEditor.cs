@@ -2,42 +2,49 @@ using CodeBase.Infrastructure;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
+#if UNITY_EDITOR
+
 using UnityEditor;
 using UnityEditor.Build;
+
+#endif
+
 using UnityEngine;
 
-namespace CodeBase.Infrastructure.Editor
+namespace CodeBase.Infrastructure
 {
+
+#if UNITY_EDITOR
     [CustomEditor(typeof(DistributionPlatformConfig))]
-    public class GameBuildConfigEditor : UnityEditor.Editor
+    public class GameBuildConfigEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
 
-            EditorGUI.BeginChangeCheck();
-           
+
             DrawDefaultInspector();
 
+        
+            EditorGUILayout.Space();
 
-            if (EditorGUI.EndChangeCheck())
+
+            if (GUILayout.Button("Apply Platform Defines"))
             {
                 serializedObject.ApplyModifiedProperties();
 
-                var config = (DistributionPlatformConfig) target;
-                ApplyDefines(config);
-                EditorUtility.SetDirty(config);
-                
+                var config = (DistributionPlatformConfig)target;
 
+                ApplyDefines(config);
+
+                EditorUtility.SetDirty(config);
                 AssetDatabase.SaveAssets();
             }
-            else
-            {
-                serializedObject.ApplyModifiedProperties();
-            }
-        }
 
+            serializedObject.ApplyModifiedProperties();
+        }
 
         [MenuItem("Tools/Distribution Platforms/Open Config")]
         public static void OpenConfig()
@@ -52,12 +59,12 @@ namespace CodeBase.Infrastructure.Editor
         {
             var config = Load();
             ApplyDefines(config);
-            Debug.Log($"Applied define: {config.GetDefineSymbol()}");
+            Debug.Log($"Applied define: {config.GetDistributionPlatformDefine()}");
         }
 
         private static DistributionPlatformConfig Load()
         {
-            var guids = AssetDatabase.FindAssets("t:DistributionPlatformConfig");
+            var guids = AssetDatabase.FindAssets("t:" + nameof(DistributionPlatformConfig));
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))
@@ -77,11 +84,17 @@ namespace CodeBase.Infrastructure.Editor
                 .Split(';')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .Where(s => !s.StartsWith(DistributionPlatformConfig.DistributionPlatformPrefix))
+                .Where(s => !s.StartsWith(DistributionPlatformConfig.PlatfromSDKPrefix))
                 .ToList();
 
-            existing.Add(config.GetDefineSymbol());
+            existing.Add(config.GetDistributionPlatformDefine());
+            existing.Add(config.GetPlatformSDKDefine());
+
             PlayerSettings.SetScriptingDefineSymbols(target, existing.ToArray());
         }
 
     }
+
+#endif
+
 }

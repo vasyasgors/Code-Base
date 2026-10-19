@@ -24,7 +24,7 @@ namespace CodeBase.Infrastructure.Editor
                 .FirstOrDefault(x => x != null);
 
 
-            string platformName = config != null ? config.GetVariantName() : EditorUserBuildSettings.activeBuildTarget.ToString();
+            string platformName = config != null ? config.GetCurrentDistributionPlatformName() : EditorUserBuildSettings.activeBuildTarget.ToString();
             string version = config != null ? PlayerSettings.bundleVersion : PlayerSettings.bundleVersion;
             string gameName = config != null ? PlayerSettings.productName : PlayerSettings.productName;
 
