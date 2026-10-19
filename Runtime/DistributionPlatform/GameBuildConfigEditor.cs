@@ -74,7 +74,7 @@ namespace CodeBase.Infrastructure
                 .Split(';')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .Where(s => !s.StartsWith(BuildEnvironmentConfig.DistributionPlatformPrefix))
-                .Where(s => !s.StartsWith(BuildEnvironmentConfig.PlatfromSDKPrefix))
+                .Where(s => !s.EndsWith(BuildEnvironmentConfig.PlatfromSDKPostfix))
                 .ToList();
 
             existing.Add(config.GetDistributionPlatformDefine());
