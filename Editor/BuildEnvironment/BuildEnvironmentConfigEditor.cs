@@ -15,7 +15,7 @@ namespace CodeBase.Infrastructure.Editor
 
             var config = (BuildEnvironmentConfig)target;
 
-            // 1. Отрисовка полного списка конфигураций (находится в самом начале)
+            // 1. Отрисовка полного списка конфигураций (в самом начале)
             DrawDefaultInspector();
 
             EditorGUILayout.Space(15);
@@ -31,7 +31,18 @@ namespace CodeBase.Infrastructure.Editor
 
                 if (newIndex != currentIndex)
                 {
+                    // Записываем новый выбранный индекс
                     config.ActiveEnvironmentIndex = newIndex;
+
+                    // МГНОВЕННО обновляем базовые поля в зависимости от выбранного окружения
+                    var activeSettings = config.GetCurrentSettings();
+                    if (activeSettings != null)
+                    {
+                        config.CurrentPlatformSDK = activeSettings.Sdk;
+                        config.CurrentDistributionPlatform = activeSettings.Platform;
+                    }
+
+                    // Применяем дефайны и сохраняем ассет
                     ApplyConfigAndSave(config);
                 }
             }
@@ -42,9 +53,17 @@ namespace CodeBase.Infrastructure.Editor
 
             EditorGUILayout.Space(10);
 
-            // 3. Выделенная кнопка "Apply Defines"
+            // 3. Кнопка "Apply Defines"
             if (GUILayout.Button("Apply Defines", GUILayout.Height(30)))
             {
+                // На всякий случай дублируем синхронизацию принудительно перед записью дефайнов
+                var activeSettings = config.GetCurrentSettings();
+                if (activeSettings != null)
+                {
+                    config.CurrentPlatformSDK = activeSettings.Sdk;
+                    config.CurrentDistributionPlatform = activeSettings.Platform;
+                }
+
                 ApplyConfigAndSave(config);
                 Debug.Log($"[BuildEnvironmentConfig] Дефайны успешно применены! Текущий SDK: {config.GetPlatformSDKDefine()}, Платформа: {config.GetDistributionPlatformDefine()}");
             }
