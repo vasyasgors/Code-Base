@@ -20,7 +20,7 @@ namespace CodeBase.Infrastructure.Editor
             var guids = AssetDatabase.FindAssets("t:DistributionPlatformConfig");
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))
+                .Select(path => AssetDatabase.LoadAssetAtPath<BuildEnvironmentConfig>(path))
                 .FirstOrDefault(x => x != null);
 
 

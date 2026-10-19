@@ -16,26 +16,22 @@ namespace CodeBase.Infrastructure
 {
 
 #if UNITY_EDITOR
-    [CustomEditor(typeof(DistributionPlatformConfig))]
+    [CustomEditor(typeof(BuildEnvironmentConfig))]
     public class GameBuildConfigEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-
-
             DrawDefaultInspector();
-
         
             EditorGUILayout.Space();
-
 
             if (GUILayout.Button("Apply Platform Defines"))
             {
                 serializedObject.ApplyModifiedProperties();
 
-                var config = (DistributionPlatformConfig)target;
+                var config = (BuildEnvironmentConfig)target;
 
                 ApplyDefines(config);
 
@@ -46,7 +42,7 @@ namespace CodeBase.Infrastructure
             serializedObject.ApplyModifiedProperties();
         }
 
-        [MenuItem("Tools/Distribution Platforms/Open Config")]
+        [MenuItem("Tools/Build Environment Config")]
         public static void OpenConfig()
         {
             var config = Load();
@@ -54,20 +50,14 @@ namespace CodeBase.Infrastructure
             EditorGUIUtility.PingObject(config);
         }
 
-        [MenuItem("Tools/Distribution Platforms/Apply Config Defines")]
-        public static void ApplyConfigDefines()
-        {
-            var config = Load();
-            ApplyDefines(config);
-            Debug.Log($"Applied define: {config.GetDistributionPlatformDefine()}");
-        }
+     
 
-        private static DistributionPlatformConfig Load()
+        private static BuildEnvironmentConfig Load()
         {
-            var guids = AssetDatabase.FindAssets("t:" + nameof(DistributionPlatformConfig));
+            var guids = AssetDatabase.FindAssets("t:" + nameof(BuildEnvironmentConfig));
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(path => AssetDatabase.LoadAssetAtPath<DistributionPlatformConfig>(path))
+                .Select(path => AssetDatabase.LoadAssetAtPath<BuildEnvironmentConfig>(path))
                 .FirstOrDefault(x => x != null);
 
             if (config != null)
@@ -77,14 +67,14 @@ namespace CodeBase.Infrastructure
             return null;
         }
 
-        private static void ApplyDefines(DistributionPlatformConfig config)
+        private static void ApplyDefines(BuildEnvironmentConfig config)
         {
             var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
             var existing = PlayerSettings.GetScriptingDefineSymbols(target)
                 .Split(';')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Where(s => !s.StartsWith(DistributionPlatformConfig.DistributionPlatformPrefix))
-                .Where(s => !s.StartsWith(DistributionPlatformConfig.PlatfromSDKPrefix))
+                .Where(s => !s.StartsWith(BuildEnvironmentConfig.DistributionPlatformPrefix))
+                .Where(s => !s.StartsWith(BuildEnvironmentConfig.PlatfromSDKPrefix))
                 .ToList();
 
             existing.Add(config.GetDistributionPlatformDefine());
