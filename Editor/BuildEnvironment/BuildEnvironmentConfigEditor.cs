@@ -73,7 +73,7 @@ namespace CodeBase.Infrastructure.Editor
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Tools/Build Environment Config")]
+        [MenuItem("Tools/Build Environment Settings")]
         public static void OpenConfig()
         {
             var config = Load();
