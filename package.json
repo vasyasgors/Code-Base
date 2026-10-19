@@ -6,8 +6,9 @@
   "description": "Code Base",
 
   "author": {
-    "name": "BeardedSchoolboy"
-  },
-
+    "name": "My Studio Name",
+    "email": "contact@mystudio.com",
+    "url": "https://mystudio.com"
+  }
 
 }
