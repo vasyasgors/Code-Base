@@ -7,9 +7,9 @@ namespace CodeBase.Infrastructure
     public enum PlatformSDK
     {
         Local = 0,
-        YandexSDK = 1,
-        CrazySDK = 2,
-        PrimeSDK = 3,
+        Yandex = 1,
+        Crazy = 2,
+        Prime = 3,
         AppLovin = 4
     }
 
