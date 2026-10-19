@@ -17,7 +17,7 @@ namespace CodeBase.Infrastructure.Editor
             if (target != BuildTarget.WebGL)
                 return;
 
-            var guids = AssetDatabase.FindAssets("t:DistributionPlatformConfig");
+            var guids = AssetDatabase.FindAssets("t:" + nameof(BuildEnvironmentConfig));
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(path => AssetDatabase.LoadAssetAtPath<BuildEnvironmentConfig>(path))

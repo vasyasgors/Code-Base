@@ -32,7 +32,8 @@ namespace CodeBase.Infrastructure
     public class BuildEnvironmentConfig : ScriptableObject
     {
         public const string DistributionPlatformPrefix = "DISTRIBUTION_PLATFORM_";
-        public const string PlatfromSDKPrefix = "PLATFORM_SDK_";
+        public const string PlatfromSDKPostfix = "SDK";
+
 
         public PlatformSDK CurrentPlatformSDK = PlatformSDK.Local;
         public DistributionPlatform CurrentDistributionPlatform = DistributionPlatform.YandexGames;
@@ -40,7 +41,7 @@ namespace CodeBase.Infrastructure
 
         public string GetPlatformSDKDefine()
         {
-            return DistributionPlatformPrefix + CurrentPlatformSDK.ToString().ToUpper();
+            return CurrentPlatformSDK.ToString().ToUpper() + PlatfromSDKPostfix;
         }
 
         public string GetDistributionPlatformDefine()
