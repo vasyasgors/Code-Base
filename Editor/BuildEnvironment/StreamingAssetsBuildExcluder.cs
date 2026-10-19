@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -7,9 +8,11 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    public class FollderExclusionPreprocessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    // Возвращаемся к IPreprocessBuildWithReport, так как он есть везде
+    public class AssetExclusionPreprocessor : IPreprocessBuildWithReport
     {
         private static List<(string origin, string hidden)> _hiddenFoldersRegistry = new List<(string origin, string hidden)>();
+        private static bool _isMonitoring = false;
 
         public int callbackOrder => int.MinValue;
 
@@ -23,6 +26,7 @@ namespace CodeBase.Infrastructure.Editor
             EnvironmentSettings currentSettings = config.GetCurrentSettings();
             if (currentSettings == null) return;
 
+            // Скрываем папки, перетащенные в массив
             if (currentSettings.ExcludedFolders != null)
             {
                 foreach (Object folderAsset in currentSettings.ExcludedFolders)
@@ -42,22 +46,34 @@ namespace CodeBase.Infrastructure.Editor
             if (_hiddenFoldersRegistry.Count > 0)
             {
                 AssetDatabase.Refresh();
+
+                // ЗАПУСКАЕМ МОНИТОРИНГ: Если этот билд отменят или он упадет, 
+                // этот метод всё равно дождется окончания и вернет папки.
+                StartBuildMonitoring();
             }
         }
 
-        public void OnPostprocessBuild(BuildReport report)
+        private static async void StartBuildMonitoring()
         {
-            if (report.summary.result == BuildResult.Cancelled)
+            if (_isMonitoring) return;
+            _isMonitoring = true;
+
+            // Ждем, пока Unity находится в процессе сборки плеера
+            while (BuildPipeline.isBuildingPlayer)
             {
-                Debug.LogWarning("[BuildPipeline] Сборка ОТМЕНЕНА. Восстановление ресурсов...");
-            }
-            else if (report.summary.result == BuildResult.Failed)
-            {
-                Debug.LogError("[BuildPipeline] Сборка ЗАВЕРШИЛАСЬ ОШИБКОЙ. Восстановление ресурсов...");
+                await Task.Delay(500); // Проверяем статус дважды в секунду
             }
 
+            // Как только билд завершился (успешно, с ошибкой или отменился) — выполняем очистку
+            ExecuteCleanup();
+            _isMonitoring = false;
+        }
+
+        private static void ExecuteCleanup()
+        {
             bool restoredAnything = false;
 
+            // ШАГ 1: Восстановление из оперативной памяти сессии
             for (int i = _hiddenFoldersRegistry.Count - 1; i >= 0; i--)
             {
                 var folderPair = _hiddenFoldersRegistry[i];
@@ -69,6 +85,7 @@ namespace CodeBase.Infrastructure.Editor
             }
             _hiddenFoldersRegistry.Clear();
 
+            // ШАГ 2: БЕЗОПАСНЫЙ СЕЙВ-ПЛАН (Чтение конфига напрямую, если память сбросилась)
             BuildEnvironmentConfig config = BuildEnvironmentConfigEditor.Load();
             if (config != null)
             {
@@ -97,7 +114,7 @@ namespace CodeBase.Infrastructure.Editor
             if (restoredAnything)
             {
                 AssetDatabase.Refresh();
-                Debug.Log("[BuildPipeline] Все исключенные директории успешно возвращены в проект.");
+                Debug.Log("[BuildPipeline] Все исключенные директории успешно возвращены в проект (Пайплайн завершен).");
             }
         }
 
@@ -119,7 +136,7 @@ namespace CodeBase.Infrastructure.Editor
             }
         }
 
-        private void RestoreFolderData(string hidden, string origin)
+        private static void RestoreFolderData(string hidden, string origin)
         {
             Directory.Move(hidden, origin);
 
@@ -131,7 +148,7 @@ namespace CodeBase.Infrastructure.Editor
             }
         }
 
-        private string GetAbsoluteSystemPath(string relativePath)
+        private static string GetAbsoluteSystemPath(string relativePath)
         {
             string absolute = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), relativePath));
             if (absolute.EndsWith("/") || absolute.EndsWith("\\"))
