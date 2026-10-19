@@ -4,8 +4,6 @@ using UnityEngine;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
-using CodeBase.Infrastructure;
-using System.Linq;
 
 namespace CodeBase.Infrastructure.Editor
 {
@@ -17,16 +15,19 @@ namespace CodeBase.Infrastructure.Editor
             if (target != BuildTarget.WebGL)
                 return;
 
-            var guids = AssetDatabase.FindAssets("t:" + nameof(BuildEnvironmentConfig));
-            var config = guids
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(path => AssetDatabase.LoadAssetAtPath<BuildEnvironmentConfig>(path))
-                .FirstOrDefault(x => x != null);
+            BuildEnvironmentConfig config = BuildEnvironmentConfigEditor.Load();
+            if (config == null) return;
 
+            EnvironmentSettings currentSettings = config.GetCurrentSettings();
+            if (currentSettings == null || !currentSettings.CreateZipArchive)
+            {
+                Debug.Log("[BuildPipeline] Создание WebGL zip архива пропущено.");
+                return;
+            }
 
-            string platformName = config != null ? config.GetCurrentDistributionPlatformName() : EditorUserBuildSettings.activeBuildTarget.ToString();
-            string version = config != null ? PlayerSettings.bundleVersion : PlayerSettings.bundleVersion;
-            string gameName = config != null ? PlayerSettings.productName : PlayerSettings.productName;
+            string platformName = config.GetCurrentDistributionPlatformName();
+            string version = PlayerSettings.bundleVersion;
+            string gameName = PlayerSettings.productName;
 
             platformName = SanitizeFileName(platformName);
             version = SanitizeFileName(version);
@@ -39,7 +40,7 @@ namespace CodeBase.Infrastructure.Editor
                 File.Delete(archivePath);
 
             ZipFile.CreateFromDirectory(pathToBuiltProject, archivePath);
-            Debug.Log($"WebGL zip created: {archivePath}");
+            Debug.Log($"WebGL zip создана: {archivePath}");
         }
 
         private static string SanitizeFileName(string name)
