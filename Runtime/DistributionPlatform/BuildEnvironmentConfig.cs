@@ -32,7 +32,7 @@ namespace CodeBase.Infrastructure
     public class BuildEnvironmentConfig : ScriptableObject
     {
         public const string DistributionPlatformPrefix = "DISTRIBUTION_PLATFORM_";
-        public const string PlatfromSDKPostfix = "SDK";
+        public const string PlatfromSDKPostfix = "_SDK";
 
 
         public PlatformSDK CurrentPlatformSDK = PlatformSDK.Local;
