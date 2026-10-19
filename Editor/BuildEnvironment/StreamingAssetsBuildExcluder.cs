@@ -7,12 +7,8 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    public class AssetExclusionPreprocessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    public class FollderExclusionPreprocessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-        private readonly string _streamingAssetsOrigin = Path.Combine(Application.dataPath, "StreamingAssets");
-        private readonly string _streamingAssetsHidden = Path.Combine(Application.dataPath, "StreamingAssets~");
-
-        // Реестр для штатного возврата папок во время одной сессии билда
         private static List<(string origin, string hidden)> _hiddenFoldersRegistry = new List<(string origin, string hidden)>();
 
         public int callbackOrder => int.MinValue;
@@ -27,17 +23,13 @@ namespace CodeBase.Infrastructure.Editor
             EnvironmentSettings currentSettings = config.GetCurrentSettings();
             if (currentSettings == null) return;
 
-            // 1. Исключение StreamingAssets
-            if (currentSettings.ExcludeStreamingAssets)
+            if (currentSettings.ExcludedFolders != null)
             {
-                HideFolder(_streamingAssetsOrigin, _streamingAssetsHidden);
-            }
-
-            // 2. Исключение списка кастомных папок
-            if (currentSettings.ExcludeFolderPaths != null)
-            {
-                foreach (string relativePath in currentSettings.ExcludeFolderPaths)
+                foreach (Object folderAsset in currentSettings.ExcludedFolders)
                 {
+                    if (folderAsset == null) continue;
+
+                    string relativePath = AssetDatabase.GetAssetPath(folderAsset);
                     if (string.IsNullOrWhiteSpace(relativePath)) continue;
 
                     string absoluteOriginPath = GetAbsoluteSystemPath(relativePath);
@@ -55,9 +47,17 @@ namespace CodeBase.Infrastructure.Editor
 
         public void OnPostprocessBuild(BuildReport report)
         {
+            if (report.summary.result == BuildResult.Cancelled)
+            {
+                Debug.LogWarning("[BuildPipeline] Сборка ОТМЕНЕНА. Восстановление ресурсов...");
+            }
+            else if (report.summary.result == BuildResult.Failed)
+            {
+                Debug.LogError("[BuildPipeline] Сборка ЗАВЕРШИЛАСЬ ОШИБКОЙ. Восстановление ресурсов...");
+            }
+
             bool restoredAnything = false;
 
-            // ШАГ 1: Штатный возврат папок из оперативной памяти
             for (int i = _hiddenFoldersRegistry.Count - 1; i >= 0; i--)
             {
                 var folderPair = _hiddenFoldersRegistry[i];
@@ -69,29 +69,22 @@ namespace CodeBase.Infrastructure.Editor
             }
             _hiddenFoldersRegistry.Clear();
 
-            // ШАГ 2: ЗАПАСНОЙ ПЛАН (На случай краша Unity, когда память очистилась)
-            // Проверяем StreamingAssets
-            if (Directory.Exists(_streamingAssetsHidden))
-            {
-                RestoreFolderData(_streamingAssetsHidden, _streamingAssetsOrigin);
-                restoredAnything = true;
-            }
-
-            // Проверяем все кастомные директории ресурсов из конфига
             BuildEnvironmentConfig config = BuildEnvironmentConfigEditor.Load();
             if (config != null)
             {
                 EnvironmentSettings currentSettings = config.GetCurrentSettings();
-                if (currentSettings != null && currentSettings.ExcludeFolderPaths != null)
+                if (currentSettings != null && currentSettings.ExcludedFolders != null)
                 {
-                    foreach (string relativePath in currentSettings.ExcludeFolderPaths)
+                    foreach (Object folderAsset in currentSettings.ExcludedFolders)
                     {
+                        if (folderAsset == null) continue;
+
+                        string relativePath = AssetDatabase.GetAssetPath(folderAsset);
                         if (string.IsNullOrWhiteSpace(relativePath)) continue;
 
                         string absoluteOriginPath = GetAbsoluteSystemPath(relativePath);
                         string absoluteHiddenPath = absoluteOriginPath + "~";
 
-                        // Если реестр стерся, но на диске физически осталась скрытая папка — возвращаем
                         if (Directory.Exists(absoluteHiddenPath))
                         {
                             RestoreFolderData(absoluteHiddenPath, absoluteOriginPath);
@@ -104,6 +97,7 @@ namespace CodeBase.Infrastructure.Editor
             if (restoredAnything)
             {
                 AssetDatabase.Refresh();
+                Debug.Log("[BuildPipeline] Все исключенные директории успешно возвращены в проект.");
             }
         }
 
@@ -121,7 +115,7 @@ namespace CodeBase.Infrastructure.Editor
                 }
 
                 _hiddenFoldersRegistry.Add((origin, hidden));
-                Debug.Log($"[BuildPipeline] Папка временно исключена: {origin}");
+                Debug.Log($"[BuildPipeline] Папка временно скрыта: {origin}");
             }
         }
 
@@ -135,13 +129,11 @@ namespace CodeBase.Infrastructure.Editor
             {
                 Directory.Move(metaHidden, metaOrigin);
             }
-            Debug.Log($"[BuildPipeline] Папка успешно возвращена: {origin}");
         }
 
-        // Хелпер для получения чистого абсолютного пути без дублирующихся слешей
         private string GetAbsoluteSystemPath(string relativePath)
         {
-            string absolute = Path.GetFullPath(Path.Combine(Application.dataPath, "..", relativePath));
+            string absolute = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), relativePath));
             if (absolute.EndsWith("/") || absolute.EndsWith("\\"))
             {
                 absolute = absolute.Substring(0, absolute.Length - 1);

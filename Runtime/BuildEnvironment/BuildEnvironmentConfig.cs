@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace CodeBase.Infrastructure
@@ -9,7 +7,7 @@ namespace CodeBase.Infrastructure
     [System.Serializable]
     public class EnvironmentSettings
     {
-        [Tooltip("Понятное название для отображения в списке и выпадающем меню")]
+        [Tooltip("Понятное название для выпадающего меню")]
         public string label;
 
         [Header("Target Pair")]
@@ -17,12 +15,13 @@ namespace CodeBase.Infrastructure
         public DistributionPlatform Platform;
 
         [Header("Features")]
-        public bool ExcludeStreamingAssets;
+        [Tooltip("Создавать ли ZIP-архив после сборки WebGL проекта")]
         public bool CreateZipArchive;
 
-        [Header("Assets Exclusion")]
-        [Tooltip("Пути к папкам относительно ассетов, которые нужно исключить из билда (например: Assets/SecretFolder)")]
-        public List<string> ExcludeFolderPaths = new List<string>();
+        [Header("Exclusion Configuration")]
+        [Tooltip("Перетащите сюда папки из окна Project, которые нужно исключить из сборки.")]
+        // Используем базовый Object, который доступен в Runtime
+        public List<UnityEngine.Object> ExcludedFolders = new List<UnityEngine.Object>();
     }
 
     [CreateAssetMenu(fileName = "Build Environment Config", menuName = "Configs/Build Environment Config")]
@@ -32,7 +31,7 @@ namespace CodeBase.Infrastructure
         public const string PlatfromSDKPostfix = "_SDK";
 
         [HideInInspector]
-        public int ActiveEnvironmentIndex = 0; // Хранит индекс выбранного окружения из списка
+        public int ActiveEnvironmentIndex = 0;
 
         [Header("Current Synchronized Targets")]
         public PlatformSDK CurrentPlatformSDK = PlatformSDK.Local;
@@ -41,12 +40,10 @@ namespace CodeBase.Infrastructure
         [Header("All Environment Configurations")]
         public List<EnvironmentSettings> Environments = new List<EnvironmentSettings>();
 
-        // Возвращает текущее активное окружение
         public EnvironmentSettings GetCurrentSettings()
         {
             if (Environments == null || Environments.Count == 0) return null;
 
-            // Защита от выхода за границы массива
             if (ActiveEnvironmentIndex < 0 || ActiveEnvironmentIndex >= Environments.Count)
             {
                 ActiveEnvironmentIndex = 0;
@@ -67,18 +64,11 @@ namespace CodeBase.Infrastructure
             return current != null ? DistributionPlatformPrefix + current.Platform.ToString().ToUpper() : DistributionPlatformPrefix + "ANY";
         }
 
-        public string GetCurrentDistributionPlatformName()
-        {
-            var current = GetCurrentSettings();
-            return current != null ? current.Platform.ToString() : "UnknownPlatform";
-        }
-
 #if UNITY_EDITOR
         private void OnValidate()
         {
             if (Environments == null) return;
 
-            // 1. Автоматически форматируем названия элементов списка для красивого отображения
             for (int i = 0; i < Environments.Count; i++)
             {
                 var env = Environments[i];
@@ -86,9 +76,27 @@ namespace CodeBase.Infrastructure
                 {
                     env.label = $"[{env.Sdk}] + [{env.Platform}]";
                 }
+
+                // ВАЛИДАЦИЯ: Защита от перетаскивания файлов вместо папок
+                if (env.ExcludedFolders != null)
+                {
+                    for (int j = 0; j < env.ExcludedFolders.Count; j++)
+                    {
+                        var obj = env.ExcludedFolders[j];
+                        if (obj != null)
+                        {
+                            string path = UnityEditor.AssetDatabase.GetAssetPath(obj);
+                            // Если это не папка, обнуляем элемент
+                            if (!string.IsNullOrEmpty(path) && !AssetDatabaseIsValidFolder(path))
+                            {
+                                Debug.LogWarning($"[BuildEnvironment] Объект '{obj.name}' не является папкой и не может быть добавлен в список исключений!");
+                                env.ExcludedFolders[j] = null;
+                            }
+                        }
+                    }
+                }
             }
 
-            // 2. Синхронизируем базовые поля класса с текущим активным окружением из выпадающего меню
             var activeSettings = GetCurrentSettings();
             if (activeSettings != null)
             {
@@ -96,8 +104,11 @@ namespace CodeBase.Infrastructure
                 CurrentDistributionPlatform = activeSettings.Platform;
             }
         }
+
+        private bool AssetDatabaseIsValidFolder(string assetPath)
+        {
+            return System.IO.Directory.Exists(System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), assetPath));
+        }
 #endif
     }
-
-
 }

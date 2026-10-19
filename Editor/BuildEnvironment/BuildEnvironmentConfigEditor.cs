@@ -12,37 +12,25 @@ namespace CodeBase.Infrastructure.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-
             var config = (BuildEnvironmentConfig)target;
 
-            // 1. Отрисовка полного списка конфигураций (в самом начале)
+            // Рисуем стандартный инспектор Unity со всеми массивами
             DrawDefaultInspector();
 
-            EditorGUILayout.Space(15);
+            EditorGUILayout.Space(20);
             EditorGUILayout.LabelField("Active Environment Selection", EditorStyles.boldLabel);
 
-            // 2. Отрисовка выпадающего меню выбора текущего активного окружения
+            // Отрисовка выпадающего меню выбора текущего активного окружения
             if (config.Environments != null && config.Environments.Count > 0)
             {
                 string[] options = config.Environments.Select(e => e.label).ToArray();
-
                 int currentIndex = config.ActiveEnvironmentIndex;
                 int newIndex = EditorGUILayout.Popup("Active Environment Target", currentIndex, options);
 
                 if (newIndex != currentIndex)
                 {
-                    // Записываем новый выбранный индекс
                     config.ActiveEnvironmentIndex = newIndex;
-
-                    // МГНОВЕННО обновляем базовые поля в зависимости от выбранного окружения
-                    var activeSettings = config.GetCurrentSettings();
-                    if (activeSettings != null)
-                    {
-                        config.CurrentPlatformSDK = activeSettings.Sdk;
-                        config.CurrentDistributionPlatform = activeSettings.Platform;
-                    }
-
-                    // Применяем дефайны и сохраняем ассет
+                    SyncTargets(config);
                     ApplyConfigAndSave(config);
                 }
             }
@@ -53,24 +41,28 @@ namespace CodeBase.Infrastructure.Editor
 
             EditorGUILayout.Space(10);
 
-            // 3. Кнопка "Apply Defines"
+            // Кнопка "Apply Defines"
             if (GUILayout.Button("Apply Defines", GUILayout.Height(30)))
             {
-                // На всякий случай дублируем синхронизацию принудительно перед записью дефайнов
-                var activeSettings = config.GetCurrentSettings();
-                if (activeSettings != null)
-                {
-                    config.CurrentPlatformSDK = activeSettings.Sdk;
-                    config.CurrentDistributionPlatform = activeSettings.Platform;
-                }
-
+                SyncTargets(config);
                 ApplyConfigAndSave(config);
-                Debug.Log($"[BuildEnvironmentConfig] Дефайны успешно применены! Текущий SDK: {config.GetPlatformSDKDefine()}, Платформа: {config.GetDistributionPlatformDefine()}");
+                Debug.Log($"[BuildEnvironmentConfig] Дефайны успешно применены! SDK: {config.GetPlatformSDKDefine()}, Платформа: {config.GetDistributionPlatformDefine()}");
             }
 
             if (serializedObject.ApplyModifiedProperties())
             {
+                SyncTargets(config);
                 ApplyConfigAndSave(config);
+            }
+        }
+
+        private void SyncTargets(BuildEnvironmentConfig config)
+        {
+            var activeSettings = config.GetCurrentSettings();
+            if (activeSettings != null)
+            {
+                config.CurrentPlatformSDK = activeSettings.Sdk;
+                config.CurrentDistributionPlatform = activeSettings.Platform;
             }
         }
 

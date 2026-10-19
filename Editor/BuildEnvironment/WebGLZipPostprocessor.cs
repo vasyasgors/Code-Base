@@ -25,7 +25,7 @@ namespace CodeBase.Infrastructure.Editor
                 return;
             }
 
-            string platformName = config.GetCurrentDistributionPlatformName();
+            string platformName = config.CurrentDistributionPlatform.ToString();
             string version = PlayerSettings.bundleVersion;
             string gameName = PlayerSettings.productName;
 
