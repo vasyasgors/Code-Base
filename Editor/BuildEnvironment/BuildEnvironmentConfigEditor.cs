@@ -9,7 +9,6 @@ namespace CodeBase.Infrastructure.Editor
     [CustomEditor(typeof(BuildEnvironmentConfig))]
     public class BuildEnvironmentConfigEditor : UnityEditor.Editor
     {
-        // Флаг, указывающий, что конфиг был изменен, но дефайны еще не применили с перекомпиляцией
         private bool _isDirty = false;
 
         public override void OnInspectorGUI()
@@ -17,13 +16,16 @@ namespace CodeBase.Infrastructure.Editor
             serializedObject.Update();
             var config = (BuildEnvironmentConfig)target;
 
-            // Рисуем стандартный инспектор Unity со всеми массивами
+            // Включаем отслеживание изменений перед отрисовкой инспектора
+            EditorGUI.BeginChangeCheck();
+
+            // 1. Рисуем полностью стандартный инспектор (включая массив Environments и наш Drawer)
             DrawDefaultInspector();
 
             EditorGUILayout.Space(20);
             EditorGUILayout.LabelField("Active Environment Selection", EditorStyles.boldLabel);
 
-            // Отрисовка выпадающего меню выбора текущего активного окружения
+            // 2. Отрисовка выпадающего меню выбора текущего активного окружения
             if (config.Environments != null && config.Environments.Count > 0)
             {
                 string[] options = config.Environments.Select(e => e.label).ToArray();
@@ -33,7 +35,7 @@ namespace CodeBase.Infrastructure.Editor
                 if (newIndex != currentIndex)
                 {
                     config.ActiveEnvironmentIndex = newIndex;
-                    _isDirty = true; // Фиксируем изменение, но НЕ компилируем
+                    _isDirty = true; // Переключение активного окружения тоже делает конфиг "грязным"
                 }
             }
             else
@@ -41,37 +43,40 @@ namespace CodeBase.Infrastructure.Editor
                 EditorGUILayout.HelpBox("Добавьте хотя бы одно окружение в список выше!", MessageType.Warning);
             }
 
+            // Если хоть одно поле, массив, размер массива или папка изменились во время отрисовки:
+            if (EditorGUI.EndChangeCheck())
+            {
+                _isDirty = true; // Подсвечиваем кнопку красным
+            }
+
             EditorGUILayout.Space(10);
 
-            // Если есть непримененные изменения, красим кнопку в красный цвет
+            // 3. Подсветка кнопки применения изменений
             Color originalColor = GUI.backgroundColor;
             if (_isDirty)
             {
                 GUI.backgroundColor = new Color(1f, 0.3f, 0.3f); // Спокойный красный цвет
             }
 
-            // Кнопка "Apply Defines"
-            if (GUILayout.Button("Apply Defines and Recompil", GUILayout.Height(30)))
+            if (GUILayout.Button("Apply Defines and Recompile", GUILayout.Height(30)))
             {
                 SyncTargets(config);
                 ApplyConfigAndSave(config);
 
-                // Принудительная перекомпиляция только по кнопке
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+                _isDirty = false; // Сбрасываем флаг, так как все применили
 
-                _isDirty = false; // Изменения успешно применены
-
-                Debug.Log($"[BuildEnvironmentConfig] Дефайны успешно применены! SDK: {config.GetPlatformSDKDefine()}, Платформа: {config.GetDistributionPlatformDefine()}");
+                Debug.Log($"[BuildEnvironmentConfig] Дефайны и настройки WebGL успешно применены! Текущий шаблон: {config.GetCurrentSettings()?.WebGlTemplate}");
             }
 
-            // Возвращаем оригинальный цвет GUI, чтобы не красить элементы ниже
             GUI.backgroundColor = originalColor;
 
+            // Применяем изменения в сериализованный объект
             if (serializedObject.ApplyModifiedProperties())
             {
+                // Вызываем синхронизацию и сохранение ассета, чтобы изменения в инспекторе не пропали при перезапуске Unity
                 SyncTargets(config);
                 ApplyConfigAndSave(config);
-                _isDirty = true; // Фиксируем изменения из дефолтного инспектора, но НЕ компилируем
             }
         }
 
@@ -88,8 +93,38 @@ namespace CodeBase.Infrastructure.Editor
         private void ApplyConfigAndSave(BuildEnvironmentConfig config)
         {
             ApplyDefines(config);
+            ApplyWebGLSettings(config); // Записываем Decompression Fallback и Template в PlayerSettings
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssets();
+        }
+
+        private static void ApplyWebGLSettings(BuildEnvironmentConfig config)
+        {
+            var activeSettings = config.GetCurrentSettings();
+            if (activeSettings == null) return;
+
+            PlayerSettings.WebGL.decompressionFallback = activeSettings.DecompressionFallback;
+
+            if (!string.IsNullOrEmpty(activeSettings.WebGlTemplate))
+            {
+                PlayerSettings.WebGL.template = activeSettings.WebGlTemplate;
+            }
+        }
+
+        private static void ApplyDefines(BuildEnvironmentConfig config)
+        {
+            var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            var existing = PlayerSettings.GetScriptingDefineSymbols(target)
+                .Split(';')
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Where(s => !s.StartsWith(BuildEnvironmentConfig.DistributionPlatformPrefix))
+                .Where(s => !s.EndsWith(BuildEnvironmentConfig.PlatfromSDKPostfix))
+                .ToList();
+
+            existing.Add(config.GetDistributionPlatformDefine());
+            existing.Add(config.GetPlatformSDKDefine());
+
+            PlayerSettings.SetScriptingDefineSymbols(target, existing.ToArray());
         }
 
         [MenuItem("Tools/Build Environment Settings")]
@@ -111,26 +146,8 @@ namespace CodeBase.Infrastructure.Editor
                 .Select(path => AssetDatabase.LoadAssetAtPath<BuildEnvironmentConfig>(path))
                 .FirstOrDefault(x => x != null);
 
-            if (config == null)
-                Debug.LogError("[Build Environment Config] не найден в проекте!");
-
+            if (config == null) Debug.LogError("[Build Environment Config] не найден в проекте!");
             return config;
-        }
-
-        private static void ApplyDefines(BuildEnvironmentConfig config)
-        {
-            var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-            var existing = PlayerSettings.GetScriptingDefineSymbols(target)
-                .Split(';')
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Where(s => !s.StartsWith(BuildEnvironmentConfig.DistributionPlatformPrefix))
-                .Where(s => !s.EndsWith(BuildEnvironmentConfig.PlatfromSDKPostfix))
-                .ToList();
-
-            existing.Add(config.GetDistributionPlatformDefine());
-            existing.Add(config.GetPlatformSDKDefine());
-
-            PlayerSettings.SetScriptingDefineSymbols(target, existing.ToArray());
         }
     }
 }
