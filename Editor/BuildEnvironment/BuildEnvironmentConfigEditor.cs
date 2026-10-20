@@ -9,6 +9,9 @@ namespace CodeBase.Infrastructure.Editor
     [CustomEditor(typeof(BuildEnvironmentConfig))]
     public class BuildEnvironmentConfigEditor : UnityEditor.Editor
     {
+        // Флаг, указывающий, что конфиг был изменен, но дефайны еще не применили с перекомпиляцией
+        private bool _isDirty = false;
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -30,8 +33,7 @@ namespace CodeBase.Infrastructure.Editor
                 if (newIndex != currentIndex)
                 {
                     config.ActiveEnvironmentIndex = newIndex;
-                    SyncTargets(config);
-                    ApplyConfigAndSave(config);
+                    _isDirty = true; // Фиксируем изменение, но НЕ компилируем
                 }
             }
             else
@@ -41,18 +43,35 @@ namespace CodeBase.Infrastructure.Editor
 
             EditorGUILayout.Space(10);
 
+            // Если есть непримененные изменения, красим кнопку в красный цвет
+            Color originalColor = GUI.backgroundColor;
+            if (_isDirty)
+            {
+                GUI.backgroundColor = new Color(1f, 0.3f, 0.3f); // Спокойный красный цвет
+            }
+
             // Кнопка "Apply Defines"
-            if (GUILayout.Button("Apply Defines", GUILayout.Height(30)))
+            if (GUILayout.Button("Apply Defines and Recompil", GUILayout.Height(30)))
             {
                 SyncTargets(config);
                 ApplyConfigAndSave(config);
+
+                // Принудительная перекомпиляция только по кнопке
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+
+                _isDirty = false; // Изменения успешно применены
+
                 Debug.Log($"[BuildEnvironmentConfig] Дефайны успешно применены! SDK: {config.GetPlatformSDKDefine()}, Платформа: {config.GetDistributionPlatformDefine()}");
             }
+
+            // Возвращаем оригинальный цвет GUI, чтобы не красить элементы ниже
+            GUI.backgroundColor = originalColor;
 
             if (serializedObject.ApplyModifiedProperties())
             {
                 SyncTargets(config);
                 ApplyConfigAndSave(config);
+                _isDirty = true; // Фиксируем изменения из дефолтного инспектора, но НЕ компилируем
             }
         }
 
