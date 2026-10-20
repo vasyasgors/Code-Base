@@ -10,7 +10,9 @@ namespace CodeBase.Infrastructure.Editor
 {
     public class PackageManagerManagerWindow : EditorWindow
     {
-        private const string ConfigPath = "Assets/Editor/PackageManagerPresets.asset";
+
+        // Папка по умолчанию, ЕСЛИ ассет вообще не найден ни в одной папке (включая Packages)
+        //private const string FallbackConfigPath = "Assets/DeveloperPresets/PackageManagerPresets.asset";
         private PackageManagerPresets _presets;
         private Vector2 _scrollPosition;
 
@@ -34,16 +36,25 @@ namespace CodeBase.Infrastructure.Editor
 
         private void LoadOrCreateConfig()
         {
-            _presets = AssetDatabase.LoadAssetAtPath<PackageManagerPresets>(ConfigPath);
-            if (_presets == null)
-            {
-                _presets = CreateInstance<PackageManagerPresets>();
-                string directory = Path.GetDirectoryName(ConfigPath);
-                if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+            // 1. Ищем ассет по типу по всему проекту, включая папку Packages
+            string[] guids = AssetDatabase.FindAssets("t:" + nameof(PackageManagerPresets));
 
-                AssetDatabase.CreateAsset(_presets, ConfigPath);
-                AssetDatabase.SaveAssets();
+            if (guids.Length > 0)
+            {
+                // Если нашли хотя бы один, загружаем его по первому GUID
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+                _presets = AssetDatabase.LoadAssetAtPath<PackageManagerPresets>(assetPath);
+                return;
             }
+
+            // 2. Если ассет нигде не найден (ни в Assets, ни в Packages), создаем дефолтный в Assets
+            //_presets = CreateInstance<PackageManagerPresets>();
+            //string directory = Path.GetDirectoryName(FallbackConfigPath);
+            //if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
+           // AssetDatabase.CreateAsset(_presets, FallbackConfigPath);
+           // AssetDatabase.SaveAssets();
+            Debug.Log($"[{nameof(PackageManagerManagerWindow)}] Пресет не найден:");
         }
 
         private void OnGUI()
@@ -53,8 +64,11 @@ namespace CodeBase.Infrastructure.Editor
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Коллекции пакетов", EditorStyles.boldLabel);
 
-            // Кнопка пинга конфига, чтобы быстро найти его в проекте
-            if (GUILayout.Button("Открыть файл конфигурации ассета", GUILayout.Width(250)))
+            // Показываем текущий путь, где лежит файл пресетов (теперь он может быть в Packages/)
+            string currentPath = AssetDatabase.GetAssetPath(_presets);
+            EditorGUILayout.LabelField($"Файл конфигурации: {currentPath}", EditorStyles.miniLabel);
+
+            if (GUILayout.Button("Фокус на файл конфигурации ассета", GUILayout.Width(250)))
             {
                 EditorGUIUtility.PingObject(_presets);
             }
@@ -65,7 +79,7 @@ namespace CodeBase.Infrastructure.Editor
             if (_currentRequest != null)
             {
                 EditorGUILayout.HelpBox($"Выполняется: {_currentActionName}...", MessageType.Info);
-                Repaint(); // Постоянно перерисовываем окно, чтобы видеть статус
+                Repaint();
                 return;
             }
 
@@ -82,14 +96,11 @@ namespace CodeBase.Infrastructure.Editor
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
                 EditorGUILayout.BeginHorizontal();
-                // Чекбокс выбора коллекции для синхронизации
                 collection.isSelected = EditorGUILayout.Toggle(collection.isSelected, GUILayout.Width(20));
 
-                // Раскрывающийся список (PropertyField)
                 SerializedProperty elementProp = collectionsProp.GetArrayElementAtIndex(i);
                 EditorGUILayout.PropertyField(elementProp, new GUIContent(collection.collectionName ?? "Новая коллекция"), true);
 
-                // Кнопка удаления коллекции
                 if (GUILayout.Button("X", GUILayout.Width(25)))
                 {
                     _presets.collections.RemoveAt(i);
@@ -112,11 +123,11 @@ namespace CodeBase.Infrastructure.Editor
             if (serializedPresets.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(_presets);
+                AssetDatabase.SaveAssets(); // Явно сохраняем изменения в ассет
             }
 
             EditorGUILayout.Space(10);
 
-            // Финальная секция кнопок действий
             GUI.backgroundColor = new Color(0.3f, 1f, 0.4f);
             if (GUILayout.Button("Обновить и Загрузить (Синхронизировать)", GUILayout.Height(40)))
             {

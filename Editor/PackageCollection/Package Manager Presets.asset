@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 109f27180247b934e873b1afb0681d76, type: 3}
+  m_Name: Package Manager Presets
+  m_EditorClassIdentifier: 
+  collections:
+  - collectionName: PrimeSDK and Implementation
+    gitUrls:
+    - https://github.com/Prime-SDK/PrimeSDK.git
+    - https://github.com/vasyasgors/PrimeSDKImplementation.git
+    isSelected: 0
+  - collectionName: CrazyGameSDK and Implementation
+    gitUrls:
+    - https://github.com/vasyasgors/CrazyGameSDK.git
+    isSelected: 0
+  - collectionName: CodeBase
+    gitUrls:
+    - https://github.com/vasyasgors/Code-Base.git
+    isSelected: 0

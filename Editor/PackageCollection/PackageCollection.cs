@@ -17,9 +17,4 @@ namespace CodeBase.Infrastructure.Editor
         // Внутренний флаг для интерфейса окна
         [HideInInspector] public bool isSelected;
     }
-
-    public class PackageManagerPresets : ScriptableObject
-    {
-        public List<PackageCollection> collections = new List<PackageCollection>();
-    }
 }
