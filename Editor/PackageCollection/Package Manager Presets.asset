@@ -13,6 +13,27 @@ MonoBehaviour:
   m_Name: Package Manager Presets
   m_EditorClassIdentifier: 
   collections:
+  - collectionName: CodeBase
+    gitUrls:
+    - https://github.com/vasyasgors/Code-Base.git
+    isSelected: 0
+  - collectionName: Transdormable Tools
+    gitUrls:
+    - https://github.com/vasyasgors/Transformable-Tools.git
+    isSelected: 0
+  - collectionName: Simple Localization
+    gitUrls:
+    - https://github.com/vasyasgors/Simple-Localization.git
+    isSelected: 0
+  - collectionName: Folliage Generator
+    gitUrls:
+    - https://github.com/vasyasgors/Foliage-Generator.git
+    isSelected: 0
+  - collectionName: Yandex Game SDK
+    gitUrls:
+    - https://github.com/vasyasgors/Yandex-Game-SDK.git
+    - https://github.com/vasyasgors/YandexGame-Implementation.git
+    isSelected: 0
   - collectionName: PrimeSDK and Implementation
     gitUrls:
     - https://github.com/Prime-SDK/PrimeSDK.git
@@ -22,7 +43,7 @@ MonoBehaviour:
     gitUrls:
     - https://github.com/vasyasgors/CrazyGameSDK.git
     isSelected: 0
-  - collectionName: CodeBase
+  - collectionName: Yandex Metrika Web SDK
     gitUrls:
-    - https://github.com/vasyasgors/Code-Base.git
+    - https://github.com/vasyasgors/YandexMetrikaWebSKD.git
     isSelected: 0
