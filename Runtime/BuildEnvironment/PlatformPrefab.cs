@@ -3,45 +3,39 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure
 {
+    [Serializable]
+    public class PlatformMapping
+    {
+        // Делаем поля публичными (или public свойства), чтобы редактор и валидатор имели к ним прямой доступ
+        public DistributionPlatform platform;
+        public string prefabPath;
+        public GameObject prefab;
+    }
+
     [CreateAssetMenu(fileName = "Platform Prefab", menuName = "Configs/Platform Prefab")]
     public class PlatformPrefab : ScriptableObject
     {
-        [SerializeField] private string path;
-        [SerializeField] private DistributionPlatform[] platforms;
+        // Поле должно называться точно так же, как в FindProperty в редакторе
+        [SerializeField] private PlatformMapping[] platformMappings;
 
-        [SerializeField] private GameObject prefab;
-
-        public string PrefabPath
+        public PlatformMapping[] PlatformMappings
         {
-            get => path;
-            set => path = value;
+            get => platformMappings;
+            set => platformMappings = value;
         }
 
-        public DistributionPlatform[] Platforms => platforms;
-
-        public GameObject Prefab
+        public GameObject GetPrefabForPlatform(DistributionPlatform platform)
         {
-            get => prefab;
-            set => prefab = value;
-        }
+            if (platformMappings == null) return null;
 
-        public GameObject GetPrefab()
-        {
-            return prefab;
-        }
-
-        public bool ContainsPlatform(DistributionPlatform platform)
-        {
-            if (platforms == null)
-                return false;
-
-            for (int i = 0; i < platforms.Length; i++)
+            for (int i = 0; i < platformMappings.Length; i++)
             {
-                if (platforms[i] == platform)
-                    return true;
+                if (platformMappings[i] != null && platformMappings[i].platform == platform)
+                {
+                    return platformMappings[i].prefab;
+                }
             }
-
-            return false;
+            return null;
         }
     }
 }
