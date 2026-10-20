@@ -27,9 +27,6 @@ namespace CodeBase.Infrastructure
 
         public GameObject GetPrefab()
         {
-            if (prefab == null)
-                throw new NullReferenceException( $"Prefab is null in {name}. Path: {path}");
-
             return prefab;
         }
 
