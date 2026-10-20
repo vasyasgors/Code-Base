@@ -16,16 +16,14 @@ namespace CodeBase.Infrastructure.Editor
             serializedObject.Update();
             var config = (BuildEnvironmentConfig)target;
 
-            // Включаем отслеживание изменений перед отрисовкой инспектора
             EditorGUI.BeginChangeCheck();
 
-            // 1. Рисуем полностью стандартный инспектор (включая массив Environments и наш Drawer)
+            // Рисуем нативный дефолтный инспектор (наш Drawer сам подменит поля внутри массива!)
             DrawDefaultInspector();
 
             EditorGUILayout.Space(20);
             EditorGUILayout.LabelField("Active Environment Selection", EditorStyles.boldLabel);
 
-            // 2. Отрисовка выпадающего меню выбора текущего активного окружения
             if (config.Environments != null && config.Environments.Count > 0)
             {
                 string[] options = config.Environments.Select(e => e.label).ToArray();
@@ -35,7 +33,7 @@ namespace CodeBase.Infrastructure.Editor
                 if (newIndex != currentIndex)
                 {
                     config.ActiveEnvironmentIndex = newIndex;
-                    _isDirty = true; // Переключение активного окружения тоже делает конфиг "грязным"
+                    _isDirty = true;
                 }
             }
             else
@@ -43,19 +41,17 @@ namespace CodeBase.Infrastructure.Editor
                 EditorGUILayout.HelpBox("Добавьте хотя бы одно окружение в список выше!", MessageType.Warning);
             }
 
-            // Если хоть одно поле, массив, размер массива или папка изменились во время отрисовки:
             if (EditorGUI.EndChangeCheck())
             {
-                _isDirty = true; // Подсвечиваем кнопку красным
+                _isDirty = true;
             }
 
             EditorGUILayout.Space(10);
 
-            // 3. Подсветка кнопки применения изменений
             Color originalColor = GUI.backgroundColor;
             if (_isDirty)
             {
-                GUI.backgroundColor = new Color(1f, 0.3f, 0.3f); // Спокойный красный цвет
+                GUI.backgroundColor = new Color(1f, 0.3f, 0.3f);
             }
 
             if (GUILayout.Button("Apply Defines and Recompile", GUILayout.Height(30)))
@@ -64,17 +60,15 @@ namespace CodeBase.Infrastructure.Editor
                 ApplyConfigAndSave(config);
 
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
-                _isDirty = false; // Сбрасываем флаг, так как все применили
+                _isDirty = false;
 
-                Debug.Log($"[BuildEnvironmentConfig] Дефайны и настройки WebGL успешно применены! Текущий шаблон: {config.GetCurrentSettings()?.WebGlTemplate}");
+                Debug.Log($"[BuildEnvironmentConfig] Настройки применены! Шаблон: {config.GetCurrentSettings()?.WebGlTemplate}");
             }
 
             GUI.backgroundColor = originalColor;
 
-            // Применяем изменения в сериализованный объект
             if (serializedObject.ApplyModifiedProperties())
             {
-                // Вызываем синхронизацию и сохранение ассета, чтобы изменения в инспекторе не пропали при перезапуске Unity
                 SyncTargets(config);
                 ApplyConfigAndSave(config);
             }
@@ -93,7 +87,7 @@ namespace CodeBase.Infrastructure.Editor
         private void ApplyConfigAndSave(BuildEnvironmentConfig config)
         {
             ApplyDefines(config);
-            ApplyWebGLSettings(config); // Записываем Decompression Fallback и Template в PlayerSettings
+            ApplyWebGLSettings(config);
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssets();
         }

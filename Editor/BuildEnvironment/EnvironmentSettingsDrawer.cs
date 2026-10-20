@@ -1,6 +1,7 @@
-﻿using System.Reflection;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
+using System.IO;
 
 namespace CodeBase.Infrastructure.Editor
 {
@@ -16,11 +17,9 @@ namespace CodeBase.Infrastructure.Editor
             LoadAvailableTemplates();
             EditorGUI.BeginProperty(position, label, property);
 
-            // Получаем понятное имя для заголовка складной группы (Foldout)
             var labelProp = property.FindPropertyRelative("label");
             string headerText = string.IsNullOrEmpty(labelProp?.stringValue) ? label.text : labelProp.stringValue;
 
-            // Отрисовываем стандартный Foldout для элемента массива
             Rect foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, headerText, true);
 
@@ -28,25 +27,30 @@ namespace CodeBase.Infrastructure.Editor
             {
                 EditorGUI.indentLevel++;
 
-                // Создаем изолированную копию свойства, чтобы безопасно итерироваться по внутренним полям
                 SerializedProperty iterator = property.Copy();
                 SerializedProperty endProperty = iterator.GetEndProperty();
 
                 float currentY = position.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
                 bool enterChildren = true;
 
-                // Проходим по всем свойствам класса EnvironmentSettings
                 while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
                 {
-                    enterChildren = false; // Нам нужен только первый уровень вложенности
+                    enterChildren = false;
 
                     if (iterator.name == "WebGlTemplate")
                     {
-                        // Вычисляем позицию для кастомного выпадающего списка
                         float height = EditorGUIUtility.singleLineHeight;
                         Rect rect = new Rect(position.x, currentY, position.width, height);
 
                         int currentIndex = Mathf.Max(0, System.Array.IndexOf(_internalPaths, iterator.stringValue));
+
+                        // Если сохраненного пути нет в массиве (например, проект только открыли), ставим Default
+                        if (currentIndex == 0 && iterator.stringValue != _internalPaths[0])
+                        {
+                            currentIndex = System.Array.IndexOf(_internalPaths, "APPLICATION:Default");
+                            if (currentIndex < 0) currentIndex = 0;
+                        }
+
                         int newIndex = EditorGUI.Popup(rect, "WebGL Template", currentIndex, _displayNames);
 
                         if (newIndex != currentIndex)
@@ -58,7 +62,6 @@ namespace CodeBase.Infrastructure.Editor
                     }
                     else
                     {
-                        // Все остальные поля рисуем стандартно, учитывая их высоту (например, для массивов папок)
                         float height = EditorGUI.GetPropertyHeight(iterator, true);
                         Rect rect = new Rect(position.x, currentY, position.width, height);
 
@@ -74,7 +77,6 @@ namespace CodeBase.Infrastructure.Editor
             EditorGUI.EndProperty();
         }
 
-        // Unity необходимо знать точную высоту элемента в пикселях, чтобы элементы массива не накладывались друг на друга
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             if (!property.isExpanded)
@@ -103,38 +105,45 @@ namespace CodeBase.Infrastructure.Editor
             return totalHeight;
         }
 
-        // Поиск WebGL шаблонов через внутреннюю рефлексию Unity
+        // Прямой поиск шаблонов на диске и в ассетах
         private void LoadAvailableTemplates()
         {
             if (_templatesLoaded) return;
 
-            var type = typeof(PlayerSettings).Assembly.GetType("UnityEditor.WebGL.WebGlTemplateUtils");
-            if (type != null)
+            List<string> displays = new List<string>();
+            List<string> paths = new List<string>();
+
+            // 1. Добавляем встроенные шаблоны Unity по умолчанию
+            displays.Add("Default");
+            paths.Add("APPLICATION:Default");
+
+            displays.Add("Minimal");
+            paths.Add("APPLICATION:Minimal");
+
+            // 2. Ищем кастомные шаблоны в папке Assets/WebGLTemplates
+            string customTemplatesPath = Path.Combine(Application.dataPath, "WebGLTemplates");
+
+            if (Directory.Exists(customTemplatesPath))
             {
-                var method = type.GetMethod("GetTemplates", BindingFlags.Public | BindingFlags.Static);
-                if (method != null)
+                // Получаем все подпапки (каждая подпапка — это отдельный шаблон)
+                string[] templateDirectories = Directory.GetDirectories(customTemplatesPath);
+
+                foreach (string dir in templateDirectories)
                 {
-                    var templates = (object[])method.Invoke(null, null);
-                    _displayNames = new string[templates.Length];
-                    _internalPaths = new string[templates.Length];
+                    string folderName = Path.GetFileName(dir);
 
-                    for (int i = 0; i < templates.Length; i++)
+                    // Проверяем, что это действительно шаблон (внутри должен быть index.html)
+                    if (File.Exists(Path.Combine(dir, "index.html")))
                     {
-                        var t = templates[i];
-                        string name = t.GetType().GetProperty("name")?.GetValue(t)?.ToString();
-                        string path = t.GetType().GetProperty("path")?.GetValue(t)?.ToString();
-
-                        _displayNames[i] = name ?? path;
-                        _internalPaths[i] = path;
+                        displays.Add($"{folderName} (Custom)");
+                        paths.Add($"PROJECT:{folderName}"); // Префикс для кастомных шаблонов проекта
                     }
-                    _templatesLoaded = true;
-                    return;
                 }
             }
 
-            _displayNames = new[] { "Default", "Minimal" };
-            _internalPaths = new[] { "APPLICATION:Default", "APPLICATION:Minimal" };
-            _templatesLoaded = true;
+            _displayNames = displays.ToArray();
+            _internalPaths = paths.ToArray();
+            _templatesLoaded = false; // Позволяет обновлять список при открытии/закрытии элементов, если добавились папки
         }
     }
 }

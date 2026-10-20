@@ -29,7 +29,7 @@ MonoBehaviour:
     gitUrls:
     - https://github.com/vasyasgors/Foliage-Generator.git
     isSelected: 0
-  - collectionName: Yandex Game SDK
+  - collectionName: Yandex Game SDK and Implementation
     gitUrls:
     - https://github.com/vasyasgors/Yandex-Game-SDK.git
     - https://github.com/vasyasgors/YandexGame-Implementation.git
