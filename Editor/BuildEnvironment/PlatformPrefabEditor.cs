@@ -7,61 +7,75 @@ namespace CodeBase.Infrastructure.Editor
     public class PlatformPrefabEditor : UnityEditor.Editor
     {
         private SerializedProperty _mappingsProp;
+        private SerializedProperty _loadedPrefabProp;
+
+        // Флаг наличия непримененных изменений для смены цвета кнопки
+        private bool _isDirty = false;
 
         private void OnEnable()
         {
-            // Ищем приватное сериализованное поле по его названию в коде
             _mappingsProp = serializedObject.FindProperty("platformMappings");
+            _loadedPrefabProp = serializedObject.FindProperty("prefab");
+            _isDirty = false;
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
+            // 1. Текущий загруженный префаб компиляции (только для чтения)
+            if (_loadedPrefabProp != null)
+            {
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.PropertyField(_loadedPrefabProp, new GUIContent("Active Runtime Prefab"), true);
+                EditorGUI.EndDisabledGroup();
+                EditorGUILayout.Space(10);
+            }
+
             if (_mappingsProp == null)
             {
-                EditorGUILayout.HelpBox("Поле 'platformMappings' не найдено в компоненте. Проверьте имя переменной.", MessageType.Error);
+                EditorGUILayout.HelpBox("Поле 'platformMappings' не найдено.", MessageType.Error);
                 return;
             }
 
-            // Отображает строку заголовка массива (Platforms List) и стрелочку свернуть/развернуть
+            EditorGUILayout.LabelField("Platform Prefab Mappings", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+
             EditorGUILayout.PropertyField(_mappingsProp, new GUIContent("Platforms List"), false);
 
             if (_mappingsProp.isExpanded)
             {
                 EditorGUI.indentLevel++;
 
-                // Кнопка быстрого добавления элемента, если массив пустой
                 if (_mappingsProp.arraySize == 0)
                 {
                     if (GUILayout.Button("Add Platform Mapping"))
                     {
                         _mappingsProp.arraySize++;
+                        _isDirty = true;
                     }
                 }
 
                 for (int i = 0; i < _mappingsProp.arraySize; i++)
                 {
                     SerializedProperty elementProp = _mappingsProp.GetArrayElementAtIndex(i);
-
-                    // Строгое соответствие именам полей в классе PlatformMapping
                     SerializedProperty platformProp = elementProp.FindPropertyRelative("platform");
                     SerializedProperty pathProp = elementProp.FindPropertyRelative("prefabPath");
-                    SerializedProperty prefabProp = elementProp.FindPropertyRelative("prefab");
 
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
-                    // Строка 1: [Платформа] [Окно для префаба]
                     EditorGUILayout.BeginHorizontal();
 
+                    // [Платформа]
                     if (platformProp != null)
                     {
+                        EditorGUI.BeginChangeCheck();
                         EditorGUILayout.PropertyField(platformProp, GUIContent.none, GUILayout.Width(130));
+                        if (EditorGUI.EndChangeCheck()) _isDirty = true;
                     }
 
-                    if (prefabProp != null && pathProp != null)
+                    // [Окно для перетаскивания префаба]
+                    if (pathProp != null)
                     {
-                        // Восстанавливаем префаб по пути из ассетов
                         GameObject currentAsset = null;
                         if (!string.IsNullOrEmpty(pathProp.stringValue))
                         {
@@ -73,30 +87,22 @@ namespace CodeBase.Infrastructure.Editor
 
                         if (EditorGUI.EndChangeCheck())
                         {
-                            if (newAsset != null)
-                            {
-                                string assetPath = AssetDatabase.GetAssetPath(newAsset);
-                                pathProp.stringValue = assetPath;
-                                prefabProp.objectReferenceValue = newAsset;
-                            }
-                            else
-                            {
-                                pathProp.stringValue = string.Empty;
-                                prefabProp.objectReferenceValue = null;
-                            }
+                            pathProp.stringValue = newAsset != null ? AssetDatabase.GetAssetPath(newAsset) : string.Empty;
+                            _isDirty = true;
                         }
                     }
 
-                    // Маленькая кнопка "Х" для удаления конкретной строки
+                    // Кнопка удаления элемента
                     if (GUILayout.Button("X", GUILayout.Width(20)))
                     {
                         _mappingsProp.DeleteArrayElementAtIndex(i);
+                        _isDirty = true;
                         break;
                     }
 
                     EditorGUILayout.EndHorizontal();
 
-                    // Строка 2: Вывод пути (только для чтения)
+                    // [Путь] под окном перетаскивания (только для чтения)
                     if (pathProp != null && !string.IsNullOrEmpty(pathProp.stringValue))
                     {
                         EditorGUI.BeginDisabledGroup(true);
@@ -113,21 +119,46 @@ namespace CodeBase.Infrastructure.Editor
                     if (GUILayout.Button("Add New Element", GUILayout.Width(150)))
                     {
                         _mappingsProp.arraySize++;
+                        _isDirty = true;
                     }
                 }
 
                 EditorGUI.indentLevel--;
             }
 
-            // Если были изменения — применяем их и сохраняем на диск
+            // Проверяем, изменились ли свойства через стандартный инспектор Unity
             if (serializedObject.ApplyModifiedProperties())
             {
+                _isDirty = true;
+            }
+
+            EditorGUILayout.Space(15);
+
+            // Кнопка перекомпиляции с динамическим цветом
+            Color originalColor = GUI.backgroundColor;
+            if (_isDirty)
+            {
+                GUI.backgroundColor = new Color(1f, 0.3f, 0.3f); // Спокойный красный цвет
+            }
+
+            if (GUILayout.Button("Apply and Recompile", GUILayout.Height(30)))
+            {
+                // Принудительно сохраняем все изменения свойств
+                serializedObject.ApplyModifiedProperties();
                 EditorUtility.SetDirty(target);
                 AssetDatabase.SaveAssets();
 
-                // Вызываем валидатор для мгновенного обновления рантайм-ссылок
+                // Вызываем валидатор (обновляем поле префаба прямо сейчас)
                 PlatformPrefabValidator.UpdateAllPlatformPrefabs();
+
+                // Запрос полной перекомпиляции скриптов Unity
+                UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+
+                _isDirty = false;
+                Debug.Log($"[{nameof(PlatformPrefabEditor)}] Изменения путей сохранены, запущен процесс валидации и перекомпиляции.");
             }
+
+            GUI.backgroundColor = originalColor;
         }
     }
 }

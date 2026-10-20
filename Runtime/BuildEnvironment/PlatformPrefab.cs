@@ -4,38 +4,37 @@ using UnityEngine;
 namespace CodeBase.Infrastructure
 {
     [Serializable]
-    public class PlatformMapping
+    public class PlatformPathMapping
     {
-        // ƒелаем пол€ публичными (или public свойства), чтобы редактор и валидатор имели к ним пр€мой доступ
         public DistributionPlatform platform;
         public string prefabPath;
-        public GameObject prefab;
     }
 
     [CreateAssetMenu(fileName = "Platform Prefab", menuName = "Configs/Platform Prefab")]
     public class PlatformPrefab : ScriptableObject
     {
-        // ѕоле должно называтьс€ точно так же, как в FindProperty в редакторе
-        [SerializeField] private PlatformMapping[] platformMappings;
+        [SerializeField] private GameObject prefab;
+        [SerializeField] private PlatformPathMapping[] platformMappings;
 
-        public PlatformMapping[] PlatformMappings
+        // ѕубличные свойства дл€ чтени€/записи (нужны дл€ редактора и валидатора)
+        public GameObject Prefab
+        {
+            get => prefab;
+            set => prefab = value;
+        }
+
+        public PlatformPathMapping[] PlatformMappings
         {
             get => platformMappings;
             set => platformMappings = value;
         }
 
-        public GameObject GetPrefabForPlatform(DistributionPlatform platform)
+        /// <summary>
+        /// ѕросто возвращает префаб, который валидатор уже подставил дл€ текущей компил€ции
+        /// </summary>
+        public GameObject GetPrefab()
         {
-            if (platformMappings == null) return null;
-
-            for (int i = 0; i < platformMappings.Length; i++)
-            {
-                if (platformMappings[i] != null && platformMappings[i].platform == platform)
-                {
-                    return platformMappings[i].prefab;
-                }
-            }
-            return null;
+            return prefab;
         }
     }
 }
