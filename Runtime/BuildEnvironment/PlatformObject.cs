@@ -10,17 +10,17 @@ namespace CodeBase.Infrastructure
         public string prefabPath;
     }
 
-    [CreateAssetMenu(fileName = "Platform Prefab", menuName = "Configs/Platform Prefab")]
-    public class PlatformPrefab : ScriptableObject
+    [CreateAssetMenu(fileName = "Platform Object", menuName = "Configs/Platform Object")]
+    public class PlatformObject : ScriptableObject
     {
-        [SerializeField] private GameObject prefab;
+        [SerializeField] private GameObject gameObject;
         [SerializeField] private PlatformPathMapping[] platformMappings;
 
         // Публичные свойства для чтения/записи (нужны для редактора и валидатора)
-        public GameObject Prefab
+        public GameObject GameObject
         {
-            get => prefab;
-            set => prefab = value;
+            get => gameObject;
+            set => gameObject = value;
         }
 
         public PlatformPathMapping[] PlatformMappings
@@ -29,12 +29,5 @@ namespace CodeBase.Infrastructure
             set => platformMappings = value;
         }
 
-        /// <summary>
-        /// Просто возвращает префаб, который валидатор уже подставил для текущей компиляции
-        /// </summary>
-        public GameObject GetPrefab()
-        {
-            return prefab;
-        }
     }
 }

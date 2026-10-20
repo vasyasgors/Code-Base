@@ -3,8 +3,8 @@ using UnityEditor;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    [CustomEditor(typeof(PlatformPrefab))]
-    public class PlatformPrefabEditor : UnityEditor.Editor
+    [CustomEditor(typeof(PlatformObject))]
+    public class PlatformObjectEditor : UnityEditor.Editor
     {
         private SerializedProperty _mappingsProp;
         private SerializedProperty _loadedPrefabProp;
@@ -15,7 +15,9 @@ namespace CodeBase.Infrastructure.Editor
         private void OnEnable()
         {
             _mappingsProp = serializedObject.FindProperty("platformMappings");
-            _loadedPrefabProp = serializedObject.FindProperty("prefab");
+
+            // ИСПРАВЛЕНИЕ: В PlatformObject поле называется "gameObject", а не "prefab"
+            _loadedPrefabProp = serializedObject.FindProperty("gameObject");
             _isDirty = false;
         }
 
@@ -41,19 +43,29 @@ namespace CodeBase.Infrastructure.Editor
             EditorGUILayout.LabelField("Platform Prefab Mappings", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
 
+            // ИСПРАВЛЕНИЕ: Если массив пустой, принудительно раскрываем его, чтобы пользователь видел структуру
+            if (_mappingsProp.arraySize == 0)
+            {
+                _mappingsProp.isExpanded = true;
+            }
+
+            // Отрисовка шапки списка платформ
             EditorGUILayout.PropertyField(_mappingsProp, new GUIContent("Platforms List"), false);
 
             if (_mappingsProp.isExpanded)
             {
                 EditorGUI.indentLevel++;
 
+                // ИСПРАВЛЕНИЕ: Кнопка добавления теперь гарантированно видна, если в массиве нет элементов
                 if (_mappingsProp.arraySize == 0)
                 {
-                    if (GUILayout.Button("Add Platform Mapping"))
+                    EditorGUILayout.Space(5);
+                    if (GUILayout.Button("+ Add First Platform Mapping", GUILayout.Height(25)))
                     {
                         _mappingsProp.arraySize++;
                         _isDirty = true;
                     }
+                    EditorGUILayout.Space(5);
                 }
 
                 for (int i = 0; i < _mappingsProp.arraySize; i++)
@@ -149,13 +161,13 @@ namespace CodeBase.Infrastructure.Editor
                 AssetDatabase.SaveAssets();
 
                 // Вызываем валидатор (обновляем поле префаба прямо сейчас)
-                PlatformPrefabValidator.UpdateAllPlatformPrefabs();
+                PlatformObjectValidator.UpdateAllPlatformPrefabs();
 
                 // Запрос полной перекомпиляции скриптов Unity
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
 
                 _isDirty = false;
-                Debug.Log($"[{nameof(PlatformPrefabEditor)}] Изменения путей сохранены, запущен процесс валидации и перекомпиляции.");
+                Debug.Log($"[{nameof(PlatformObjectEditor)}] Изменения путей сохранены, запущен процесс валидации и перекомпиляции.");
             }
 
             GUI.backgroundColor = originalColor;

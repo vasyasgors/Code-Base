@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    public static class PlatformPrefabValidator
+    public static class PlatformObjectValidator
     {
         [DidReloadScripts]
-        static PlatformPrefabValidator()
+        static PlatformObjectValidator()
         {
             UpdateAllPlatformPrefabs();
         }
@@ -26,13 +26,13 @@ namespace CodeBase.Infrastructure.Editor
             DistributionPlatform currentPlatform = environmentConfig.CurrentDistributionPlatform;
 
             // 2. Находим все PlatformPrefab ассеты
-            string[] prefabGuids = AssetDatabase.FindAssets("t:" + nameof(PlatformPrefab));
+            string[] prefabGuids = AssetDatabase.FindAssets("t:" + nameof(PlatformObject));
             bool anyAssetChanged = false;
 
             foreach (string guid in prefabGuids)
             {
                 string assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                var platformPrefab = AssetDatabase.LoadAssetAtPath<PlatformPrefab>(assetPath);
+                var platformPrefab = AssetDatabase.LoadAssetAtPath<PlatformObject>(assetPath);
 
                 if (platformPrefab == null) continue;
 
@@ -52,7 +52,7 @@ namespace CodeBase.Infrastructure.Editor
 
                                 if (targetPrefab == null)
                                 {
-                                    Debug.LogError($"[{nameof(PlatformPrefabValidator)}] Не удалось загрузить префаб по пути '{mapping.prefabPath}' для платформы {currentPlatform} в ассете {platformPrefab.name}");
+                                    Debug.LogError($"[{nameof(PlatformObjectValidator)}] Не удалось загрузить префаб по пути '{mapping.prefabPath}' для платформы {currentPlatform} в ассете {platformPrefab.name}");
                                 }
                             }
                             break; // Нашли нужную платформу, выходим из цикла
@@ -61,13 +61,13 @@ namespace CodeBase.Infrastructure.Editor
                 }
 
                 // 4. Если текущий префаб компиляции отличается от целевого — обновляем его
-                if (platformPrefab.Prefab != targetPrefab)
+                if (platformPrefab.GameObject != targetPrefab)
                 {
-                    platformPrefab.Prefab = targetPrefab;
+                    platformPrefab.GameObject = targetPrefab;
                     EditorUtility.SetDirty(platformPrefab);
                     anyAssetChanged = true;
 
-                    Debug.Log($"[{nameof(PlatformPrefabValidator)}] Ассет '{platformPrefab.name}' перекомпилирован под платформу {currentPlatform}. Активный префаб: {(targetPrefab != null ? targetPrefab.name : "null")}");
+                    Debug.Log($"[{nameof(PlatformObjectValidator)}] Ассет '{platformPrefab.name}' перекомпилирован под платформу {currentPlatform}. Активный префаб: {(targetPrefab != null ? targetPrefab.name : "null")}");
                 }
             }
 
