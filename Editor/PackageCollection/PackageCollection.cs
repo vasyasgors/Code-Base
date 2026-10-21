@@ -14,7 +14,7 @@ namespace CodeBase.Infrastructure.Editor
         [Tooltip("Список git-ссылок (например, https://github.com)")]
         public List<string> gitUrls = new List<string>();
 
-        // Внутренний флаг для интерфейса окна
+        // Убедитесь, что здесь НЕТ [NonSerialized]. HideInInspector скрывает только в обычном инспекторе, но сохранению не мешает.
         [HideInInspector] public bool isSelected;
     }
 }

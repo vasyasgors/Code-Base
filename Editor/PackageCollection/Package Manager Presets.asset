@@ -20,11 +20,11 @@ MonoBehaviour:
   - collectionName: Transdormable Tools
     gitUrls:
     - https://github.com/vasyasgors/Transformable-Tools.git
-    isSelected: 0
+    isSelected: 1
   - collectionName: Simple Localization
     gitUrls:
     - https://github.com/vasyasgors/Simple-Localization.git
-    isSelected: 0
+    isSelected: 1
   - collectionName: Folliage Generator
     gitUrls:
     - https://github.com/vasyasgors/Foliage-Generator.git

@@ -16,6 +16,9 @@ namespace CodeBase.Infrastructure.Editor
         private PackageManagerPresets _presets;
         private Vector2 _scrollPosition;
 
+        private HashSet<string> _targetGitUrls = new HashSet<string>();
+        private HashSet<string> _excludedGitUrls = new HashSet<string>();
+
         // Очереди для пакетного менеджера
         private Queue<string> _packagesToAdd = new Queue<string>();
         private Queue<string> _packagesToRemove = new Queue<string>();
@@ -94,17 +97,24 @@ namespace CodeBase.Infrastructure.Editor
                 var collection = _presets.collections[i];
 
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
                 EditorGUILayout.BeginHorizontal();
-                collection.isSelected = EditorGUILayout.Toggle(collection.isSelected, GUILayout.Width(20));
 
+                // --- ИСПРАВЛЕНИЕ ТУТ ---
+                // Получаем доступ к свойству isSelected конкретного элемента в массиве через SerializedProperty
                 SerializedProperty elementProp = collectionsProp.GetArrayElementAtIndex(i);
+                SerializedProperty isSelectedProp = elementProp.FindPropertyRelative("isSelected");
+
+                // Отрисовываем чекбокс, привязанный к системе сериализации Unity
+                isSelectedProp.boolValue = EditorGUILayout.Toggle(isSelectedProp.boolValue, GUILayout.Width(20));
+                // -----------------------
+
                 EditorGUILayout.PropertyField(elementProp, new GUIContent(collection.collectionName ?? "Новая коллекция"), true);
 
                 if (GUILayout.Button("X", GUILayout.Width(25)))
                 {
-                    _presets.collections.RemoveAt(i);
-                    serializedPresets.Update();
+                    // Для удаления элемента из SerializedProperty лучше использовать методы самого свойства, 
+                    // чтобы Unity корректно зафиксировала изменение структуры данных
+                    collectionsProp.DeleteArrayElementAtIndex(i);
                     break;
                 }
                 EditorGUILayout.EndHorizontal();
@@ -115,25 +125,23 @@ namespace CodeBase.Infrastructure.Editor
 
             if (GUILayout.Button("+ Добавить новую коллекцию", GUILayout.Height(25)))
             {
-                _presets.collections.Add(new PackageCollection { collectionName = "Новая коллекция" });
+                // Добавляем элемент также через SerializedProperty, чтобы не сбивать индекс
+                int newIndex = collectionsProp.arraySize;
+                collectionsProp.InsertArrayElementAtIndex(newIndex);
+                var newElement = collectionsProp.GetArrayElementAtIndex(newIndex);
+                newElement.FindPropertyRelative("collectionName").stringValue = "Новая коллекция";
+                newElement.FindPropertyRelative("gitUrls").ClearArray();
+                newElement.FindPropertyRelative("isSelected").boolValue = false;
             }
 
             EditorGUILayout.EndScrollView();
 
+            // Применяем изменения. Если что-то поменялось (включая галочку), Unity сама вызовет SetDirty и сохранит файл.
             if (serializedPresets.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(_presets);
-                AssetDatabase.SaveAssets(); // Явно сохраняем изменения в ассет
+                AssetDatabase.SaveAssets();
             }
-
-            EditorGUILayout.Space(10);
-
-            GUI.backgroundColor = new Color(0.3f, 1f, 0.4f);
-            if (GUILayout.Button("Обновить и Загрузить (Синхронизировать)", GUILayout.Height(40)))
-            {
-                StartSynchronization();
-            }
-            GUI.backgroundColor = Color.white;
         }
 
         private void StartSynchronization()
@@ -148,7 +156,9 @@ namespace CodeBase.Infrastructure.Editor
                 }
             }
 
-            // Собираем все ссылки из НЕВЫБРАННЫХ коллекций (их мы будем удалять, если они стоят в проекте)
+        
+
+            // Собираем все ссылки из НЕВЫБРАННЫХ коллекций
             HashSet<string> excludedGitUrls = new HashSet<string>();
             foreach (var col in _presets.collections.Where(c => !c.isSelected))
             {
@@ -160,96 +170,47 @@ namespace CodeBase.Infrastructure.Editor
 
             Debug.Log($"[Package Sync] Запрос списка установленных пакетов...");
 
-            // 1. Запрашиваем у Unity список текущих установленных пакетов
-            var listRequest = Client.List(true, false);
+            _packagesToAdd.Clear();
+            _packagesToRemove.Clear();
 
-            // Ждем завершения синхронно
-            while (!listRequest.IsCompleted) { /* Ждем */ }
+            // Инициализируем запрос списка асинхронно
+            _currentActionName = "Получение списка установленных пакетов";
+            _currentRequest = Client.List(true, false);
 
-            if (listRequest.Status == StatusCode.Success)
-            {
-                _packagesToAdd.Clear();
-                _packagesToRemove.Clear();
-
-                var installedPackages = listRequest.Result;
-
-                // Проверяем, какие из ИСКЛЮЧЕННЫХ пакетов сейчас установлены (чтобы удалить их)
-                foreach (var p in installedPackages)
-                {
-                    // Безопасно извлекаем Git URL, если он есть
-                    string gitUrlFromPackage = string.Empty;
-                    if (p.source == PackageSource.Git)
-                    {
-                        // Извлекаем либо через repository.url, либо из строки packageId (формат com.package@https://github.com...)
-                        if (p.repository != null && !string.IsNullOrEmpty(p.repository.url))
-                        {
-                            gitUrlFromPackage = p.repository.url;
-                        }
-                        else if (!string.IsNullOrEmpty(p.packageId) && p.packageId.Contains("@"))
-                        {
-                            gitUrlFromPackage = p.packageId.Split('@')[1];
-                        }
-                    }
-
-                    // Если пакет есть в списке удаления и его НЕТ в выбранных коллекциях
-                    bool isInExcludedList = excludedGitUrls.Contains(p.name) ||
-                                           (!string.IsNullOrEmpty(gitUrlFromPackage) && excludedGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
-
-                    bool isInTargetList = targetGitUrls.Contains(p.name) ||
-                                         (!string.IsNullOrEmpty(gitUrlFromPackage) && targetGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
-
-                    if (isInExcludedList && !isInTargetList)
-                    {
-                        _packagesToRemove.Enqueue(p.name);
-                    }
-                }
-
-                // Проверяем, каких целевых пакетов не хватает
-                foreach (var targetUrl in targetGitUrls)
-                {
-                    bool isInstalled = installedPackages.Any(p =>
-                    {
-                        if (p.name == targetUrl) return true;
-
-                        if (p.source == PackageSource.Git)
-                        {
-                            string gitUrl = (p.repository != null) ? p.repository.url : "";
-                            if (string.IsNullOrEmpty(gitUrl) && p.packageId.Contains("@"))
-                            {
-                                gitUrl = p.packageId.Split('@')[1];
-                            }
-                            return !string.IsNullOrEmpty(gitUrl) && gitUrl.Contains(targetUrl);
-                        }
-                        return false;
-                    });
-
-                    if (!isInstalled)
-                    {
-                        _packagesToAdd.Enqueue(targetUrl);
-                    }
-                }
-
-                // Запускаем конвейер выполнения команд пакетного менеджера
-                EditorApplication.update += ProgressQueueProcessing;
-            }
-            else
-            {
-                Debug.LogError($"[Package Sync] Ошибка получения списка пакетов: {listRequest.Error.message}");
-            }
+            // Подписываемся на апдейт, обработка начнется асинхронно в ProgressQueueProcessing
+            EditorApplication.update -= ProgressQueueProcessing; // Защита от дублирования
+            EditorApplication.update += ProgressQueueProcessing;
         }
+
         private void ProgressQueueProcessing()
         {
             if (_currentRequest != null)
             {
-                if (!_currentRequest.IsCompleted) return; // Ждем текущую операцию
+                if (!_currentRequest.IsCompleted) return; // Ждем завершения текущей операции
 
                 if (_currentRequest.Status == StatusCode.Success)
                 {
                     Debug.Log($"[Package Sync] Успешно выполнено: {_currentActionName}");
+
+                    // --- ВСТАВЛЯТЬ СЮДА ---
+                    // Если завершился запрос списка пакетов, обрабатываем его и наполняем очереди
+                    if (_currentRequest is ListRequest listRequest)
+                    {
+                        ProcessListResult(listRequest.Result, _targetGitUrls, _excludedGitUrls);
+                    }
+                    // ----------------------
                 }
                 else
                 {
                     Debug.LogError($"[Package Sync] Ошибка при {_currentActionName}: {_currentRequest.Error.message}");
+
+                    // Если ошибка произошла на этапе получения списка, прерываем всю синхронизацию
+                    if (_currentActionName.Contains("получение списка") || _currentRequest is ListRequest)
+                    {
+                        _currentRequest = null;
+                        EditorApplication.update -= ProgressQueueProcessing;
+                        return;
+                    }
                 }
 
                 _currentRequest = null;
@@ -276,6 +237,63 @@ namespace CodeBase.Infrastructure.Editor
             // Очереди пусты — отписываемся от тиков редактора
             EditorApplication.update -= ProgressQueueProcessing;
             Debug.Log("[Package Sync] Синхронизация коллекций пакетов полностью завершена!");
+        }
+
+        // Указываем явный полный тип UnityEditor.PackageManager.PackageCollection, чтобы избежать конфликта с вашим классом
+        private void ProcessListResult(UnityEditor.PackageManager.PackageCollection installedPackages, HashSet<string> targetGitUrls, HashSet<string> excludedGitUrls)
+        {
+            // Проверяем, какие из ИСКЛЮЧЕННЫХ пакетов сейчас установлены (чтобы удалить их)
+            foreach (var p in installedPackages)
+            {
+                string gitUrlFromPackage = string.Empty;
+                if (p.source == PackageSource.Git)
+                {
+                    if (p.repository != null && !string.IsNullOrEmpty(p.repository.url))
+                    {
+                        gitUrlFromPackage = p.repository.url;
+                    }
+                    else if (!string.IsNullOrEmpty(p.packageId) && p.packageId.Contains("@"))
+                    {
+                        gitUrlFromPackage = p.packageId.Split('@')[1]; // Восстановлен правильный индекс среза [1]
+                    }
+                }
+
+                bool isInExcludedList = excludedGitUrls.Contains(p.name) ||
+                                       (!string.IsNullOrEmpty(gitUrlFromPackage) && excludedGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
+
+                bool isInTargetList = targetGitUrls.Contains(p.name) ||
+                                     (!string.IsNullOrEmpty(gitUrlFromPackage) && targetGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
+
+                if (isInExcludedList && !isInTargetList)
+                {
+                    _packagesToRemove.Enqueue(p.name);
+                }
+            }
+
+            // Проверяем, каких целевых пакетов не хватает
+            foreach (var targetUrl in targetGitUrls)
+            {
+                bool isInstalled = installedPackages.Any(p =>
+                {
+                    if (p.name == targetUrl) return true;
+
+                    if (p.source == PackageSource.Git)
+                    {
+                        string gitUrl = (p.repository != null) ? p.repository.url : "";
+                        if (string.IsNullOrEmpty(gitUrl) && p.packageId.Contains("@"))
+                        {
+                            gitUrl = p.packageId.Split('@')[1]; // Восстановлен индекс [1]
+                        }
+                        return !string.IsNullOrEmpty(gitUrl) && gitUrl.Contains(targetUrl);
+                    }
+                    return false;
+                });
+
+                if (!isInstalled)
+                {
+                    _packagesToAdd.Enqueue(targetUrl);
+                }
+            }
         }
     }
 }
