@@ -120,6 +120,9 @@ namespace CodeBase.Infrastructure.Editor
             displays.Add("Minimal");
             paths.Add("APPLICATION:Minimal");
 
+            displays.Add("PWA");
+            paths.Add("APPLICATION:PWA");
+
             // 2. Ищем кастомные шаблоны в папке Assets/WebGLTemplates
             string customTemplatesPath = Path.Combine(Application.dataPath, "WebGLTemplates");
 
