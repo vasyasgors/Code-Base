@@ -9,6 +9,7 @@ namespace CodeBase.Infrastructure
     public class DistributionBuildProfiles : ScriptableObject
     {
         public const string DistributionPlatformPrefix = "DISTRIBUTION_PLATFORM_";
+        public const string PlatfromSDKPostfix = "_SDK";
 
         [HideInInspector]
         public int ActiveEnvironmentIndex = 0;

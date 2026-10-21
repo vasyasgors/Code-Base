@@ -112,6 +112,7 @@ namespace CodeBase.Infrastructure.Editor
                 .Split(';')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .Where(s => !s.StartsWith(DistributionBuildProfiles.DistributionPlatformPrefix))
+                .Where(s => !s.EndsWith(DistributionBuildProfiles.PlatfromSDKPostfix))
                 .ToList();
 
             existing.Add(config.GetDistributionPlatformDefine());
