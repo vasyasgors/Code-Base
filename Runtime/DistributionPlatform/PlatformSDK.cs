@@ -7,7 +7,7 @@
         CrazySDK = 2,
         PrimeSDK = 3,
         AppLovinSDK = 4,
-        YandexMetrikaWebSDK = 4,
-        RuStoreSDK
+        YandexMetrikaWebSDK = 5,
+        RuStoreSDK = 6
     }
 }
