@@ -1,14 +1,12 @@
 {
   "name": "com.beardedschoolboy.codebase",
   "displayName": "Code Base",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "unity": "2020.3",
   "description": "Code Base",
-
   "author": {
     "name": "Bearded Schoolboy",
     "email": "-",
     "url": "-"
   }
-
 }
