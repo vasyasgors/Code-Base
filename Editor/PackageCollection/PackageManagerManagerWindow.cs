@@ -19,6 +19,9 @@ namespace CodeBase.Infrastructure.Editor
         // Переменная для хранения состояния галочки обновления
         private bool _updateAlreadyInstalled = false;
 
+        private HashSet<int> _selectedCollectionIndices = new HashSet<int>();
+
+
         [MenuItem("Tools/Package Collections Manager")]
         public static void ShowWindow()
         {
@@ -73,10 +76,22 @@ namespace CodeBase.Infrastructure.Editor
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.BeginHorizontal();
 
-                SerializedProperty elementProp = collectionsProp.GetArrayElementAtIndex(i);
-                SerializedProperty isSelectedProp = elementProp.FindPropertyRelative("isSelected");
 
-                isSelectedProp.boolValue = EditorGUILayout.Toggle(isSelectedProp.boolValue, GUILayout.Width(20));
+                // --- ВСТАВЬТЕ ЭТОТ КОД: ---
+                SerializedProperty elementProp = collectionsProp.GetArrayElementAtIndex(i);
+                // Считываем состояние галочки из временной коллекции в оперативной памяти окна
+                bool isSelected = _selectedCollectionIndices.Contains(i);
+                bool newSelected = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
+
+                // Если пользователь нажал на галочку, обновляем данные только в памяти окна
+                if (newSelected != isSelected)
+                {
+                    if (newSelected) _selectedCollectionIndices.Add(i);
+                    else _selectedCollectionIndices.Remove(i);
+                }
+
+                // ------------------------------------------------------------------------
+
 
                 EditorGUILayout.PropertyField(elementProp, new GUIContent(collection.collectionName ?? "Новая коллекция"), true);
 
@@ -139,16 +154,22 @@ namespace CodeBase.Infrastructure.Editor
             _targetGitUrls.Clear();
             _excludedGitUrls.Clear();
 
-            foreach (var col in _presets.collections.Where(c => c.isSelected))
+            // --- ИЗМЕНЕНИЕ ТУТ: Сортируем ссылки на основе нашего runtime-списка индексов ---
+            for (int i = 0; i < _presets.collections.Count; i++)
             {
-                foreach (var url in col.gitUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
-                    _targetGitUrls.Add(url.Trim());
-            }
+                var col = _presets.collections[i];
+                bool isSelected = _selectedCollectionIndices.Contains(i);
 
-            foreach (var col in _presets.collections.Where(c => !c.isSelected))
-            {
-                foreach (var url in col.gitUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
-                    _excludedGitUrls.Add(url.Trim());
+                if (isSelected)
+                {
+                    foreach (var url in col.gitUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
+                        _targetGitUrls.Add(url.Trim());
+                }
+                else
+                {
+                    foreach (var url in col.gitUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
+                        _excludedGitUrls.Add(url.Trim());
+                }
             }
 
             var listRequest = Client.List(true, false);
