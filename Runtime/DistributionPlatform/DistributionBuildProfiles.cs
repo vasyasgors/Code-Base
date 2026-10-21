@@ -31,10 +31,25 @@ namespace CodeBase.Infrastructure
             return Profiles[ActiveEnvironmentIndex];
         }
 
-        public string GetPlatformSDKDefine()
+        // Изменено: Метод теперь возвращает список дефайнов для всех выбранных SDK
+        public List<string> GetPlatformSDKDefines()
         {
             var current = GetCurrentSettings();
-            return current != null ? current.Sdk.ToString().ToUpper() + PlatfromSDKPostfix : "LOCAL" + PlatfromSDKPostfix;
+            var defines = new List<string>();
+
+            if (current != null && current.Sdks != null && current.Sdks.Count > 0)
+            {
+                foreach (var sdk in current.Sdks)
+                {
+                    defines.Add(sdk.ToString().ToUpper() + PlatfromSDKPostfix);
+                }
+            }
+            else
+            {
+                defines.Add("LOCAL" + PlatfromSDKPostfix);
+            }
+
+            return defines;
         }
 
         public string GetDistributionPlatformDefine()
@@ -53,10 +68,11 @@ namespace CodeBase.Infrastructure
                 var env = Profiles[i];
                 if (string.IsNullOrEmpty(env.label) || env.label.StartsWith("[") || env.label.Contains("+"))
                 {
-                    env.label = $"[{env.Sdk}] + [{env.Platform}]";
+                    // Изменено: генерация лейбла с учетом нескольких SDK
+                    string sdksLabel = env.Sdks != null && env.Sdks.Count > 0 ? string.Join(", ", env.Sdks) : "None";
+                    env.label = $"[{env.Platform}] : [{sdksLabel}]";
                 }
 
-                // ВАЛИДАЦИЯ: Защита от перетаскивания файлов вместо папок
                 if (env.ExcludedFolders != null)
                 {
                     for (int j = 0; j < env.ExcludedFolders.Count; j++)
@@ -78,8 +94,8 @@ namespace CodeBase.Infrastructure
             var activeSettings = GetCurrentSettings();
             if (activeSettings != null && RuntimeConfig != null)
             {
-                RuntimeConfig.CurrentPlatformSDK = activeSettings.Sdk;
-                RuntimeConfig.CurrentDistributionPlatform = activeSettings.Platform;
+                // Изменено: Удалена строчка RuntimeConfig.CurrentPlatformSDK = activeSettings.Sdk;
+                RuntimeConfig.CurrentPlatform = activeSettings.Platform;
                 UnityEditor.EditorUtility.SetDirty(RuntimeConfig);
             }
         }

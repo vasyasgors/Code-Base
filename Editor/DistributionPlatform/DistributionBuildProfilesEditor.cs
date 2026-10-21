@@ -78,8 +78,8 @@ namespace CodeBase.Infrastructure.Editor
             var activeSettings = config.GetCurrentSettings();
             if (activeSettings != null && config.RuntimeConfig != null)
             {
-                config.RuntimeConfig.CurrentPlatformSDK = activeSettings.Sdk;
-                config.RuntimeConfig.CurrentDistributionPlatform = activeSettings.Platform;
+                // Изменено: Удалена строчка переноса SDK в RuntimeConfig
+                config.RuntimeConfig.CurrentPlatform = activeSettings.Platform;
                 EditorUtility.SetDirty(config.RuntimeConfig);
             }
         }
@@ -116,7 +116,9 @@ namespace CodeBase.Infrastructure.Editor
                 .ToList();
 
             existing.Add(config.GetDistributionPlatformDefine());
-            existing.Add(config.GetPlatformSDKDefine());
+
+            // Изменено: Добавляем все дефайны из списка SDK активного профиля
+            existing.AddRange(config.GetPlatformSDKDefines());
 
             PlayerSettings.SetScriptingDefineSymbols(target, existing.ToArray());
         }

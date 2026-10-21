@@ -33,7 +33,7 @@ namespace CodeBase.Infrastructure.Editor
             }
 
             // Изменено: Берем платформу из вынесенного RuntimeConfig
-            string platformName = config.RuntimeConfig.CurrentDistributionPlatform.ToString();
+            string platformName = config.RuntimeConfig.CurrentPlatform.ToString();
             string version = PlayerSettings.bundleVersion;
             string gameName = PlayerSettings.productName;
 

@@ -31,7 +31,7 @@ namespace CodeBase.Infrastructure.Editor
             }
 
             // Изменено: Берем текущую платформу из вынесенного RuntimeConfig
-            DistributionPlatform currentPlatform = environmentConfig.RuntimeConfig.CurrentDistributionPlatform;
+            DistributionPlatform currentPlatform = environmentConfig.RuntimeConfig.CurrentPlatform;
 
             // 2. Находим все PlatformPrefab ассеты
             string[] prefabGuids = AssetDatabase.FindAssets("t:" + nameof(DistributionPlatformObject));

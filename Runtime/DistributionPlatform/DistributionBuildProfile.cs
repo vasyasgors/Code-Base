@@ -7,7 +7,7 @@ namespace CodeBase.Infrastructure
     public class DistributionBuildProfile
     {
         public string label;
-        public PlatformSDK Sdk;
+        public List<PlatformSDK> Sdks = new List<PlatformSDK>();
         public DistributionPlatform Platform;
         public bool CreateZipArchive;
         public bool DecompressionFallback;
