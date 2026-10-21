@@ -10,8 +10,8 @@ namespace CodeBase.Infrastructure
         public string prefabPath;
     }
 
-    [CreateAssetMenu(fileName = "Platform Object", menuName = "Configs/Platform Object")]
-    public class PlatformObject : ScriptableObject
+    [CreateAssetMenu(fileName = "Distribution Platform Object", menuName = "Configs/Distribution Platform Object")]
+    public class DistributionPlatformObject : ScriptableObject
     {
         [SerializeField] private GameObject gameObject;
         [SerializeField] private PlatformPathMapping[] platformMappings;

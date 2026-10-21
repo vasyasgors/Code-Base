@@ -15,17 +15,25 @@ namespace CodeBase.Infrastructure.Editor
             if (target != BuildTarget.WebGL)
                 return;
 
-            BuildEnvironmentConfig config = BuildEnvironmentConfigEditor.Load();
+            DistributionBuildProfiles config = DistributionBuildProfilesEditor.Load();
             if (config == null) return;
 
-            EnvironmentSettings currentSettings = config.GetCurrentSettings();
+            DistributionBuildProfile currentSettings = config.GetCurrentSettings();
             if (currentSettings == null || !currentSettings.CreateZipArchive)
             {
                 Debug.Log("[BuildPipeline] Создание WebGL zip архива пропущено.");
                 return;
             }
 
-            string platformName = config.CurrentDistributionPlatform.ToString();
+            // ПРОВЕРКА: Проверяем, что ссылка на рантайм-конфиг существует
+            if (config.RuntimeConfig == null)
+            {
+                Debug.LogError("[BuildPipeline] Ошибка создания ZIP: Ссылка на RuntimeConfig не задана в DistributionBuildProfiles!");
+                return;
+            }
+
+            // Изменено: Берем платформу из вынесенного RuntimeConfig
+            string platformName = config.RuntimeConfig.CurrentDistributionPlatform.ToString();
             string version = PlayerSettings.bundleVersion;
             string gameName = PlayerSettings.productName;
 

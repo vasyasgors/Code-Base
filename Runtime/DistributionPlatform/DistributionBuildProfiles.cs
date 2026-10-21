@@ -4,9 +4,8 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure
 {
-
-    [CreateAssetMenu(fileName = "Build Environment Config", menuName = "Configs/Build Environment Config")]
-    public class BuildEnvironmentConfig : ScriptableObject
+    [CreateAssetMenu(fileName = "Distribution Build Profiles", menuName = "Configs/Distribution Build Profiles")]
+    public class DistributionBuildProfiles : ScriptableObject
     {
         public const string DistributionPlatformPrefix = "DISTRIBUTION_PLATFORM_";
         public const string PlatfromSDKPostfix = "_SDK";
@@ -14,23 +13,22 @@ namespace CodeBase.Infrastructure
         [HideInInspector]
         public int ActiveEnvironmentIndex = 0;
 
-        [Header("Current Synchronized Targets")]
-        public PlatformSDK CurrentPlatformSDK = PlatformSDK.Local;
-        public DistributionPlatform CurrentDistributionPlatform = DistributionPlatform.YandexGames;
+        [Header("Runtime Configuration Link")]
+        public RuntimeDistributionPlatfromConfig RuntimeConfig;
 
-        [Header("All Environment Configurations")]
-        public List<EnvironmentSettings> Environments = new List<EnvironmentSettings>();
+        [Space(10)]
+        public List<DistributionBuildProfile> Profiles = new List<DistributionBuildProfile>();
 
-        public EnvironmentSettings GetCurrentSettings()
+        public DistributionBuildProfile GetCurrentSettings()
         {
-            if (Environments == null || Environments.Count == 0) return null;
+            if (Profiles == null || Profiles.Count == 0) return null;
 
-            if (ActiveEnvironmentIndex < 0 || ActiveEnvironmentIndex >= Environments.Count)
+            if (ActiveEnvironmentIndex < 0 || ActiveEnvironmentIndex >= Profiles.Count)
             {
                 ActiveEnvironmentIndex = 0;
             }
 
-            return Environments[ActiveEnvironmentIndex];
+            return Profiles[ActiveEnvironmentIndex];
         }
 
         public string GetPlatformSDKDefine()
@@ -48,11 +46,11 @@ namespace CodeBase.Infrastructure
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (Environments == null) return;
+            if (Profiles == null) return;
 
-            for (int i = 0; i < Environments.Count; i++)
+            for (int i = 0; i < Profiles.Count; i++)
             {
-                var env = Environments[i];
+                var env = Profiles[i];
                 if (string.IsNullOrEmpty(env.label) || env.label.StartsWith("[") || env.label.Contains("+"))
                 {
                     env.label = $"[{env.Sdk}] + [{env.Platform}]";
@@ -67,7 +65,6 @@ namespace CodeBase.Infrastructure
                         if (obj != null)
                         {
                             string path = UnityEditor.AssetDatabase.GetAssetPath(obj);
-                            // Если это не папка, обнуляем элемент
                             if (!string.IsNullOrEmpty(path) && !AssetDatabaseIsValidFolder(path))
                             {
                                 Debug.LogWarning($"[BuildEnvironment] Объект '{obj.name}' не является папкой и не может быть добавлен в список исключений!");
@@ -79,10 +76,11 @@ namespace CodeBase.Infrastructure
             }
 
             var activeSettings = GetCurrentSettings();
-            if (activeSettings != null)
+            if (activeSettings != null && RuntimeConfig != null)
             {
-                CurrentPlatformSDK = activeSettings.Sdk;
-                CurrentDistributionPlatform = activeSettings.Platform;
+                RuntimeConfig.CurrentPlatformSDK = activeSettings.Sdk;
+                RuntimeConfig.CurrentDistributionPlatform = activeSettings.Platform;
+                UnityEditor.EditorUtility.SetDirty(RuntimeConfig);
             }
         }
 

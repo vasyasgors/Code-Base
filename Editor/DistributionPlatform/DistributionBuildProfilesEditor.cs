@@ -6,27 +6,26 @@ using UnityEngine;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    [CustomEditor(typeof(BuildEnvironmentConfig))]
-    public class BuildEnvironmentConfigEditor : UnityEditor.Editor
+    [CustomEditor(typeof(DistributionBuildProfiles))]
+    public class DistributionBuildProfilesEditor : UnityEditor.Editor
     {
         private bool _isDirty = false;
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            var config = (BuildEnvironmentConfig)target;
+            var config = (DistributionBuildProfiles)target;
 
             EditorGUI.BeginChangeCheck();
 
-            // Рисуем нативный дефолтный инспектор (наш Drawer сам подменит поля внутри массива!)
             DrawDefaultInspector();
 
-            EditorGUILayout.Space(20);
-            EditorGUILayout.LabelField("Active Environment Selection", EditorStyles.boldLabel);
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Selected profile", EditorStyles.boldLabel);
 
-            if (config.Environments != null && config.Environments.Count > 0)
+            if (config.Profiles != null && config.Profiles.Count > 0)
             {
-                string[] options = config.Environments.Select(e => e.label).ToArray();
+                string[] options = config.Profiles.Select(e => e.label).ToArray();
                 int currentIndex = config.ActiveEnvironmentIndex;
                 int newIndex = EditorGUILayout.Popup("Active Environment Target", currentIndex, options);
 
@@ -74,17 +73,18 @@ namespace CodeBase.Infrastructure.Editor
             }
         }
 
-        private void SyncTargets(BuildEnvironmentConfig config)
+        private void SyncTargets(DistributionBuildProfiles config)
         {
             var activeSettings = config.GetCurrentSettings();
-            if (activeSettings != null)
+            if (activeSettings != null && config.RuntimeConfig != null)
             {
-                config.CurrentPlatformSDK = activeSettings.Sdk;
-                config.CurrentDistributionPlatform = activeSettings.Platform;
+                config.RuntimeConfig.CurrentPlatformSDK = activeSettings.Sdk;
+                config.RuntimeConfig.CurrentDistributionPlatform = activeSettings.Platform;
+                EditorUtility.SetDirty(config.RuntimeConfig);
             }
         }
 
-        private void ApplyConfigAndSave(BuildEnvironmentConfig config)
+        private void ApplyConfigAndSave(DistributionBuildProfiles config)
         {
             ApplyDefines(config);
             ApplyWebGLSettings(config);
@@ -92,7 +92,7 @@ namespace CodeBase.Infrastructure.Editor
             AssetDatabase.SaveAssets();
         }
 
-        private static void ApplyWebGLSettings(BuildEnvironmentConfig config)
+        private static void ApplyWebGLSettings(DistributionBuildProfiles config)
         {
             var activeSettings = config.GetCurrentSettings();
             if (activeSettings == null) return;
@@ -105,14 +105,14 @@ namespace CodeBase.Infrastructure.Editor
             }
         }
 
-        private static void ApplyDefines(BuildEnvironmentConfig config)
+        private static void ApplyDefines(DistributionBuildProfiles config)
         {
             var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
             var existing = PlayerSettings.GetScriptingDefineSymbols(target)
                 .Split(';')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
-                .Where(s => !s.StartsWith(BuildEnvironmentConfig.DistributionPlatformPrefix))
-                .Where(s => !s.EndsWith(BuildEnvironmentConfig.PlatfromSDKPostfix))
+                .Where(s => !s.StartsWith(DistributionBuildProfiles.DistributionPlatformPrefix))
+                .Where(s => !s.EndsWith(DistributionBuildProfiles.PlatfromSDKPostfix))
                 .ToList();
 
             existing.Add(config.GetDistributionPlatformDefine());
@@ -132,12 +132,12 @@ namespace CodeBase.Infrastructure.Editor
             }
         }
 
-        public static BuildEnvironmentConfig Load()
+        public static DistributionBuildProfiles Load()
         {
-            var guids = AssetDatabase.FindAssets("t:" + nameof(BuildEnvironmentConfig));
+            var guids = AssetDatabase.FindAssets("t:" + nameof(DistributionBuildProfiles));
             var config = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(path => AssetDatabase.LoadAssetAtPath<BuildEnvironmentConfig>(path))
+                .Select(path => AssetDatabase.LoadAssetAtPath<DistributionBuildProfiles>(path))
                 .FirstOrDefault(x => x != null);
 
             if (config == null) Debug.LogError("[Build Environment Config] не найден в проекте!");

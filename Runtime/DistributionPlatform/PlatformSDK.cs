@@ -8,6 +8,4 @@
         Prime = 3,
         AppLovin = 4
     }
-
-
 }

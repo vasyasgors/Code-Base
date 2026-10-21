@@ -5,8 +5,8 @@ using System.IO;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    [CustomPropertyDrawer(typeof(EnvironmentSettings))]
-    public class EnvironmentSettingsDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(DistributionBuildProfile))]
+    public class DistributionBuildSettingsDrawer : PropertyDrawer
     {
         private string[] _displayNames;
         private string[] _internalPaths;

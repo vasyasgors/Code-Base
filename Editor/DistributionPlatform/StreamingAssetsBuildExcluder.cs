@@ -21,10 +21,10 @@ namespace CodeBase.Infrastructure.Editor
         {
             _hiddenFoldersRegistry.Clear();
 
-            BuildEnvironmentConfig config = BuildEnvironmentConfigEditor.Load();
+            DistributionBuildProfiles config = DistributionBuildProfilesEditor.Load();
             if (config == null) return;
 
-            EnvironmentSettings currentSettings = config.GetCurrentSettings();
+            DistributionBuildProfile currentSettings = config.GetCurrentSettings();
             if (currentSettings == null) return;
 
             if (currentSettings.ExcludedFolders != null)
@@ -90,10 +90,10 @@ namespace CodeBase.Infrastructure.Editor
             _hiddenFoldersRegistry.Clear();
 
             // ШАГ 2: БЕЗОПАСНЫЙ СЕЙВ-ПЛАН (Чтение конфига напрямую, если память сбросилась)
-            BuildEnvironmentConfig config = BuildEnvironmentConfigEditor.Load();
+            DistributionBuildProfiles config = DistributionBuildProfilesEditor.Load();
             if (config != null)
             {
-                EnvironmentSettings currentSettings = config.GetCurrentSettings();
+                DistributionBuildProfile currentSettings = config.GetCurrentSettings();
                 if (currentSettings != null && currentSettings.ExcludedFolders != null)
                 {
                     foreach (Object folderAsset in currentSettings.ExcludedFolders)

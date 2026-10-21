@@ -3,8 +3,8 @@ using UnityEditor;
 
 namespace CodeBase.Infrastructure.Editor
 {
-    [CustomEditor(typeof(PlatformObject))]
-    public class PlatformObjectEditor : UnityEditor.Editor
+    [CustomEditor(typeof(DistributionPlatformObject))]
+    public class DistributionPlatformObjectEditor : UnityEditor.Editor
     {
         private SerializedProperty _mappingsProp;
         private SerializedProperty _loadedPrefabProp;
@@ -161,13 +161,13 @@ namespace CodeBase.Infrastructure.Editor
                 AssetDatabase.SaveAssets();
 
                 // Вызываем валидатор (обновляем поле префаба прямо сейчас)
-                PlatformObjectValidator.UpdateAllPlatformPrefabs();
+                DistributionPlatformObjectValidator.UpdateAllPlatformPrefabs();
 
                 // Запрос полной перекомпиляции скриптов Unity
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
 
                 _isDirty = false;
-                Debug.Log($"[{nameof(PlatformObjectEditor)}] Изменения путей сохранены, запущен процесс валидации и перекомпиляции.");
+                Debug.Log($"[{nameof(DistributionPlatformObjectEditor)}] Изменения путей сохранены, запущен процесс валидации и перекомпиляции.");
             }
 
             GUI.backgroundColor = originalColor;
