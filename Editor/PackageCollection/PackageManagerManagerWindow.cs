@@ -10,20 +10,14 @@ namespace CodeBase.Infrastructure.Editor
 {
     public class PackageManagerManagerWindow : EditorWindow
     {
-
-        // Папка по умолчанию, ЕСЛИ ассет вообще не найден ни в одной папке (включая Packages)
-        //private const string FallbackConfigPath = "Assets/DeveloperPresets/PackageManagerPresets.asset";
         private PackageManagerPresets _presets;
         private Vector2 _scrollPosition;
 
         private HashSet<string> _targetGitUrls = new HashSet<string>();
         private HashSet<string> _excludedGitUrls = new HashSet<string>();
 
-        // Очереди для пакетного менеджера
-        private Queue<string> _packagesToAdd = new Queue<string>();
-        private Queue<string> _packagesToRemove = new Queue<string>();
-        private Request _currentRequest;
-        private string _currentActionName;
+        // Переменная для хранения состояния галочки обновления
+        private bool _updateAlreadyInstalled = false;
 
         [MenuItem("Tools/Package Collections Manager")]
         public static void ShowWindow()
@@ -39,25 +33,15 @@ namespace CodeBase.Infrastructure.Editor
 
         private void LoadOrCreateConfig()
         {
-            // 1. Ищем ассет по типу по всему проекту, включая папку Packages
             string[] guids = AssetDatabase.FindAssets("t:" + nameof(PackageManagerPresets));
 
             if (guids.Length > 0)
             {
-                // Если нашли хотя бы один, загружаем его по первому GUID
                 string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
                 _presets = AssetDatabase.LoadAssetAtPath<PackageManagerPresets>(assetPath);
                 return;
             }
-
-            // 2. Если ассет нигде не найден (ни в Assets, ни в Packages), создаем дефолтный в Assets
-            //_presets = CreateInstance<PackageManagerPresets>();
-            //string directory = Path.GetDirectoryName(FallbackConfigPath);
-            //if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
-
-           // AssetDatabase.CreateAsset(_presets, FallbackConfigPath);
-           // AssetDatabase.SaveAssets();
-            Debug.Log($"[{nameof(PackageManagerManagerWindow)}] Пресет не найден:");
+            Debug.Log($"[{nameof(PackageManagerManagerWindow)}] Пресет не найден.");
         }
 
         private void OnGUI()
@@ -67,7 +51,6 @@ namespace CodeBase.Infrastructure.Editor
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Коллекции пакетов", EditorStyles.boldLabel);
 
-            // Показываем текущий путь, где лежит файл пресетов
             string currentPath = AssetDatabase.GetAssetPath(_presets);
             EditorGUILayout.LabelField($"Файл конфигурации: {currentPath}", EditorStyles.miniLabel);
 
@@ -78,17 +61,8 @@ namespace CodeBase.Infrastructure.Editor
 
             EditorGUILayout.Space(10);
 
-            // Отображение прогресса выполнения пакетных операций
-            if (_currentRequest != null)
-            {
-                EditorGUILayout.HelpBox($"Выполняется: {_currentActionName}...", MessageType.Info);
-                Repaint();
-                return;
-            }
-
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
-            // Отрисовка коллекций
             SerializedObject serializedPresets = new SerializedObject(_presets);
             SerializedProperty collectionsProp = serializedPresets.FindProperty("collections");
 
@@ -127,180 +101,157 @@ namespace CodeBase.Infrastructure.Editor
                 newElement.FindPropertyRelative("isSelected").boolValue = false;
             }
 
-            // --- КНОПКА ПЕРЕНЕСЕНА СЮДА (внутрь ScrollView) ---
-            EditorGUILayout.Space(15); // Небольшой отступ от кнопки добавления
+            EditorGUILayout.Space(15);
 
-            GUI.backgroundColor = new Color(0.3f, 1f, 0.4f); // Возвращен зеленый цвет (по желанию можно раскомментировать)
+            // --- ДОБАВЛЕНА ГАЛОЧКА ПЕРЕД КНОПКОЙ ---
+            _updateAlreadyInstalled = EditorGUILayout.ToggleLeft("Обновить уже установленные пакеты (перепроверить ссылки)", _updateAlreadyInstalled);
+            EditorGUILayout.Space(5);
+            // ----------------------------------------
+
+            GUI.backgroundColor = new Color(0.3f, 1f, 0.4f);
             if (GUILayout.Button("Обновить и Загрузить (Синхронизировать)", GUILayout.Height(35)))
             {
-                StartSynchronization();
+                ExecuteSynchronization();
             }
             GUI.backgroundColor = Color.white;
-            // --------------------------------------------------
 
-            EditorGUILayout.EndScrollView(); // Конец области прокрутки
+            EditorGUILayout.EndScrollView();
 
             if (serializedPresets.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(_presets);
-                AssetDatabase.SaveAssets(); // Явно сохраняем изменения в ассет
+                AssetDatabase.SaveAssets();
             }
 
-            // Снизу оставили небольшой пустой отступ для эстетики
             EditorGUILayout.Space(10);
         }
 
-
-        private void StartSynchronization()
+        private void ExecuteSynchronization()
         {
-            // Собираем все ссылки из ВЫБРАННЫХ коллекций
-            HashSet<string> targetGitUrls = new HashSet<string>();
+            if (EditorApplication.isCompiling)
+            {
+                Debug.LogWarning("[Package Sync] Редактор занят компиляцией. Пожалуйста, подождите.");
+                return;
+            }
+
+            EditorUtility.DisplayProgressBar("Синхронизация пакетов", "Получение списка установленных пакетов...", 0.1f);
+
+            _targetGitUrls.Clear();
+            _excludedGitUrls.Clear();
+
             foreach (var col in _presets.collections.Where(c => c.isSelected))
             {
                 foreach (var url in col.gitUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
-                {
-                    targetGitUrls.Add(url.Trim());
-                }
+                    _targetGitUrls.Add(url.Trim());
             }
 
-        
-
-            // Собираем все ссылки из НЕВЫБРАННЫХ коллекций
-            HashSet<string> excludedGitUrls = new HashSet<string>();
             foreach (var col in _presets.collections.Where(c => !c.isSelected))
             {
                 foreach (var url in col.gitUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
-                {
-                    excludedGitUrls.Add(url.Trim());
-                }
+                    _excludedGitUrls.Add(url.Trim());
             }
 
-            Debug.Log($"[Package Sync] Запрос списка установленных пакетов...");
+            var listRequest = Client.List(true, false);
+            while (!listRequest.IsCompleted) { }
 
-            _packagesToAdd.Clear();
-            _packagesToRemove.Clear();
-
-            // Инициализируем запрос списка асинхронно
-            _currentActionName = "Получение списка установленных пакетов";
-            _currentRequest = Client.List(true, false);
-
-            // Подписываемся на апдейт, обработка начнется асинхронно в ProgressQueueProcessing
-            EditorApplication.update -= ProgressQueueProcessing; // Защита от дублирования
-            EditorApplication.update += ProgressQueueProcessing;
-        }
-
-        private void ProgressQueueProcessing()
-        {
-            if (_currentRequest != null)
+            if (listRequest.Status != StatusCode.Success)
             {
-                if (!_currentRequest.IsCompleted) return; // Ждем завершения текущей операции
-
-                if (_currentRequest.Status == StatusCode.Success)
-                {
-                    Debug.Log($"[Package Sync] Успешно выполнено: {_currentActionName}");
-
-                    // --- ВСТАВЛЯТЬ СЮДА ---
-                    // Если завершился запрос списка пакетов, обрабатываем его и наполняем очереди
-                    if (_currentRequest is ListRequest listRequest)
-                    {
-                        ProcessListResult(listRequest.Result, _targetGitUrls, _excludedGitUrls);
-                    }
-                    // ----------------------
-                }
-                else
-                {
-                    Debug.LogError($"[Package Sync] Ошибка при {_currentActionName}: {_currentRequest.Error.message}");
-
-                    // Если ошибка произошла на этапе получения списка, прерываем всю синхронизацию
-                    if (_currentActionName.Contains("получение списка") || _currentRequest is ListRequest)
-                    {
-                        _currentRequest = null;
-                        EditorApplication.update -= ProgressQueueProcessing;
-                        return;
-                    }
-                }
-
-                _currentRequest = null;
-            }
-
-            // Сначала удаляем всё лишнее
-            if (_packagesToRemove.Count > 0)
-            {
-                string packId = _packagesToRemove.Dequeue();
-                _currentActionName = $"Удаление {packId}";
-                _currentRequest = Client.Remove(packId);
+                Debug.LogError($"[Package Sync] Ошибка получения списка: {listRequest.Error.message}");
+                EditorUtility.ClearProgressBar();
                 return;
             }
 
-            // Затем накатываем то, чего не хватает
-            if (_packagesToAdd.Count > 0)
-            {
-                string packUrl = _packagesToAdd.Dequeue();
-                _currentActionName = $"Установка {packUrl}";
-                _currentRequest = Client.Add(packUrl);
-                return;
-            }
+            List<string> toRemove = new List<string>();
+            List<string> toAdd = new List<string>();
 
-            // Очереди пусты — отписываемся от тиков редактора
-            EditorApplication.update -= ProgressQueueProcessing;
-            Debug.Log("[Package Sync] Синхронизация коллекций пакетов полностью завершена!");
-        }
-
-        // Указываем явный полный тип UnityEditor.PackageManager.PackageCollection, чтобы избежать конфликта с вашим классом
-        private void ProcessListResult(UnityEditor.PackageManager.PackageCollection installedPackages, HashSet<string> targetGitUrls, HashSet<string> excludedGitUrls)
-        {
-            // Проверяем, какие из ИСКЛЮЧЕННЫХ пакетов сейчас установлены (чтобы удалить их)
-            foreach (var p in installedPackages)
+            foreach (var p in listRequest.Result)
             {
                 string gitUrlFromPackage = string.Empty;
                 if (p.source == PackageSource.Git)
                 {
                     if (p.repository != null && !string.IsNullOrEmpty(p.repository.url))
-                    {
                         gitUrlFromPackage = p.repository.url;
-                    }
                     else if (!string.IsNullOrEmpty(p.packageId) && p.packageId.Contains("@"))
-                    {
-                        gitUrlFromPackage = p.packageId.Split('@')[1]; // Восстановлен правильный индекс среза [1]
-                    }
+                        gitUrlFromPackage = p.packageId.Split('@')[1];
                 }
 
-                bool isInExcludedList = excludedGitUrls.Contains(p.name) ||
-                                       (!string.IsNullOrEmpty(gitUrlFromPackage) && excludedGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
+                bool isInExcludedList = _excludedGitUrls.Contains(p.name) ||
+                                       (!string.IsNullOrEmpty(gitUrlFromPackage) && _excludedGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
 
-                bool isInTargetList = targetGitUrls.Contains(p.name) ||
-                                     (!string.IsNullOrEmpty(gitUrlFromPackage) && targetGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
+                bool isInTargetList = _targetGitUrls.Contains(p.name) ||
+                                     (!string.IsNullOrEmpty(gitUrlFromPackage) && _targetGitUrls.Any(url => gitUrlFromPackage.Contains(url)));
 
                 if (isInExcludedList && !isInTargetList)
-                {
-                    _packagesToRemove.Enqueue(p.name);
-                }
+                    toRemove.Add(p.name);
             }
 
-            // Проверяем, каких целевых пакетов не хватает
-            foreach (var targetUrl in targetGitUrls)
+            foreach (var targetUrl in _targetGitUrls)
             {
-                bool isInstalled = installedPackages.Any(p =>
+                // Проверяем, установлен ли уже пакет
+                bool isInstalled = listRequest.Result.Any(p =>
                 {
                     if (p.name == targetUrl) return true;
-
                     if (p.source == PackageSource.Git)
                     {
                         string gitUrl = (p.repository != null) ? p.repository.url : "";
                         if (string.IsNullOrEmpty(gitUrl) && p.packageId.Contains("@"))
-                        {
-                            gitUrl = p.packageId.Split('@')[1]; // Восстановлен индекс [1]
-                        }
+                            gitUrl = p.packageId.Split('@')[1];
                         return !string.IsNullOrEmpty(gitUrl) && gitUrl.Contains(targetUrl);
                     }
                     return false;
                 });
 
-                if (!isInstalled)
+                // --- ИСПРАВЛЕНИЕ ЛОГИКИ ОБНОВЛЕНИЯ ---
+                // Если пакет не установлен ИЛИ если включена галочка "Обновить уже установленные"
+                if (!isInstalled || _updateAlreadyInstalled)
                 {
-                    _packagesToAdd.Enqueue(targetUrl);
+                    toAdd.Add(targetUrl);
                 }
+                // -------------------------------------
             }
+
+            int totalOperations = toRemove.Count + toAdd.Count;
+            int currentOperation = 0;
+
+            if (totalOperations == 0)
+            {
+                Debug.Log("[Package Sync] Все пакеты уже соответствуют выбранным коллекциям.");
+                EditorUtility.ClearProgressBar();
+                return;
+            }
+
+            // 1. Удаление лишних
+            foreach (var packId in toRemove)
+            {
+                currentOperation++;
+                float progress = (float)currentOperation / totalOperations;
+                EditorUtility.DisplayProgressBar("Синхронизация пакетов", $"Удаление пакета: {packId}...", progress);
+
+                var removeRequest = Client.Remove(packId);
+                while (!removeRequest.IsCompleted) { }
+
+                if (removeRequest.Status == StatusCode.Success)
+                    Debug.Log($"[Package Sync] Успешно удален: {packId}");
+                else
+                    Debug.LogError($"[Package Sync] Ошибка удаления {packId}: {removeRequest.Error.message}");
+            }
+
+            // 2. Установка новых / Обновление существующих
+            foreach (var packUrl in toAdd)
+            {
+                currentOperation++;
+                float progress = (float)currentOperation / totalOperations;
+                EditorUtility.DisplayProgressBar("Синхронизация пакетов", $"Обработка пакета: {packUrl}...", progress);
+
+                var addRequest = Client.Add(packUrl);
+                while (!addRequest.IsCompleted) { }
+                if (addRequest.Status == StatusCode.Success)
+                    Debug.Log($"[Package Sync] Успешно обработан/обновлен: {packUrl}");
+                else
+                    Debug.LogError($"[Package Sync] Ошибка установки/обновления {packUrl}: {addRequest.Error.message}");
+            }
+            EditorUtility.ClearProgressBar();
+            Debug.Log("[Package Sync] Синхронизация коллекций пакетов полностью завершена!");
         }
     }
 }
