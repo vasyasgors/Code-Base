@@ -121,7 +121,7 @@ namespace CodeBase.Infrastructure.Editor
             PlayerSettings.SetScriptingDefineSymbols(target, existing.ToArray());
         }
 
-        [MenuItem("Tools/Build Environment Settings")]
+        [MenuItem("Tools/Distribution Build Profils")]
         public static void OpenConfig()
         {
             var config = Load();

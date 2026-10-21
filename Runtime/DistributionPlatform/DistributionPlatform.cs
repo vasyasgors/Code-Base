@@ -2,7 +2,7 @@
 {
     public enum DistributionPlatform
     {
-        Any = 0,
+        Local = 0,
         YandexGames = 1,
         CrazyGames = 2,
         Poki = 4,
