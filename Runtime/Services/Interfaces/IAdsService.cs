@@ -9,12 +9,12 @@ namespace CodeBase.Infrastructure
     {
         bool IsFullscreenAvailable { get; }
         bool IsRewardedAvailable { get;  }
-        bool IsStickyAvailable { get;  }
+        bool IsBannerAvailable { get;  }
 
         void ShowFullscreenAd(UnityAction onClosed = null);
         void ShowRewardedAd(UnityAction onRewarded = null, UnityAction onClosed = null);
-        void ShowStickyBanner();
-        void HideStickyBanner();
+        void ShowBanner();
+        void HideBanner();
     }
 }
 
