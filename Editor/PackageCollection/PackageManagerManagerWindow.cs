@@ -67,7 +67,7 @@ namespace CodeBase.Infrastructure.Editor
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Коллекции пакетов", EditorStyles.boldLabel);
 
-            // Показываем текущий путь, где лежит файл пресетов (теперь он может быть в Packages/)
+            // Показываем текущий путь, где лежит файл пресетов
             string currentPath = AssetDatabase.GetAssetPath(_presets);
             EditorGUILayout.LabelField($"Файл конфигурации: {currentPath}", EditorStyles.miniLabel);
 
@@ -99,21 +99,15 @@ namespace CodeBase.Infrastructure.Editor
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.BeginHorizontal();
 
-                // --- ИСПРАВЛЕНИЕ ТУТ ---
-                // Получаем доступ к свойству isSelected конкретного элемента в массиве через SerializedProperty
                 SerializedProperty elementProp = collectionsProp.GetArrayElementAtIndex(i);
                 SerializedProperty isSelectedProp = elementProp.FindPropertyRelative("isSelected");
 
-                // Отрисовываем чекбокс, привязанный к системе сериализации Unity
                 isSelectedProp.boolValue = EditorGUILayout.Toggle(isSelectedProp.boolValue, GUILayout.Width(20));
-                // -----------------------
 
                 EditorGUILayout.PropertyField(elementProp, new GUIContent(collection.collectionName ?? "Новая коллекция"), true);
 
                 if (GUILayout.Button("X", GUILayout.Width(25)))
                 {
-                    // Для удаления элемента из SerializedProperty лучше использовать методы самого свойства, 
-                    // чтобы Unity корректно зафиксировала изменение структуры данных
                     collectionsProp.DeleteArrayElementAtIndex(i);
                     break;
                 }
@@ -125,7 +119,6 @@ namespace CodeBase.Infrastructure.Editor
 
             if (GUILayout.Button("+ Добавить новую коллекцию", GUILayout.Height(25)))
             {
-                // Добавляем элемент также через SerializedProperty, чтобы не сбивать индекс
                 int newIndex = collectionsProp.arraySize;
                 collectionsProp.InsertArrayElementAtIndex(newIndex);
                 var newElement = collectionsProp.GetArrayElementAtIndex(newIndex);
@@ -134,15 +127,29 @@ namespace CodeBase.Infrastructure.Editor
                 newElement.FindPropertyRelative("isSelected").boolValue = false;
             }
 
-            EditorGUILayout.EndScrollView();
+            // --- КНОПКА ПЕРЕНЕСЕНА СЮДА (внутрь ScrollView) ---
+            EditorGUILayout.Space(15); // Небольшой отступ от кнопки добавления
 
-            // Применяем изменения. Если что-то поменялось (включая галочку), Unity сама вызовет SetDirty и сохранит файл.
+            GUI.backgroundColor = new Color(0.3f, 1f, 0.4f); // Возвращен зеленый цвет (по желанию можно раскомментировать)
+            if (GUILayout.Button("Обновить и Загрузить (Синхронизировать)", GUILayout.Height(35)))
+            {
+                StartSynchronization();
+            }
+            GUI.backgroundColor = Color.white;
+            // --------------------------------------------------
+
+            EditorGUILayout.EndScrollView(); // Конец области прокрутки
+
             if (serializedPresets.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(_presets);
-                AssetDatabase.SaveAssets();
+                AssetDatabase.SaveAssets(); // Явно сохраняем изменения в ассет
             }
+
+            // Снизу оставили небольшой пустой отступ для эстетики
+            EditorGUILayout.Space(10);
         }
+
 
         private void StartSynchronization()
         {
