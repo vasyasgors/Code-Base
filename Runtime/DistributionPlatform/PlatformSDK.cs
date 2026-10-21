@@ -1,5 +1,6 @@
 ﻿namespace CodeBase.Infrastructure
 {
+    // Обязательно в конце должно быть SDK
     public enum PlatformSDK
     {
         NoSDK = 0,

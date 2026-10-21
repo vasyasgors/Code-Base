@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace CodeBase.Infrastructure
@@ -8,7 +9,6 @@ namespace CodeBase.Infrastructure
     public class DistributionBuildProfiles : ScriptableObject
     {
         public const string DistributionPlatformPrefix = "DISTRIBUTION_PLATFORM_";
-        public const string PlatfromSDKPostfix = "";
 
         [HideInInspector]
         public int ActiveEnvironmentIndex = 0;
@@ -31,7 +31,7 @@ namespace CodeBase.Infrastructure
             return Profiles[ActiveEnvironmentIndex];
         }
 
-        // Изменено: Метод теперь возвращает список дефайнов для всех выбранных SDK
+        // Изменено: Метод корректно форматирует имя SDK из enum, добавляя "_" перед словом SDK
         public List<string> GetPlatformSDKDefines()
         {
             var current = GetCurrentSettings();
@@ -41,12 +41,26 @@ namespace CodeBase.Infrastructure
             {
                 foreach (var sdk in current.Sdks)
                 {
-                    defines.Add(sdk.ToString().ToUpper() + PlatfromSDKPostfix);
+                    string sdkName = sdk.ToString().ToUpper();
+
+                    // Если имя заканчивается на SDK, но перед ним нет подчёркивания, вставляем его
+                    if (sdkName.EndsWith("SDK") && !sdkName.EndsWith("_SDK"))
+                    {
+                        // Заменяет "SDK" на "_SDK" в конце строки
+                        sdkName = Regex.Replace(sdkName, @"SDK$", "_SDK");
+                    }
+                    else if (!sdkName.EndsWith("_SDK"))
+                    {
+                        // Если вдруг в enum имя без букв SDK (например, просто "YANDEX"), добавляем суффикс
+                        sdkName += "_SDK";
+                    }
+
+                    defines.Add(sdkName);
                 }
             }
             else
             {
-                defines.Add("LOCAL" + PlatfromSDKPostfix);
+                defines.Add("LOCAL_SDK");
             }
 
             return defines;
